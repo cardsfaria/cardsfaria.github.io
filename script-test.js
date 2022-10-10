@@ -371,14 +371,16 @@ const cardsFilterRow = (cards) => {
   }
 
   const colorsReference = getColorsReference(colors);
-  if(colorsReference.length <= 0) {
+  if(!foil && colorsReference.length <= 0) {
     return cards;
   }
 
   
   return cards.filter(card => {
-    if(foil) {
-      return card['FOIL?'] && card.category.some(category => colorsReference.includes(category))
+    if(foil && colorsReference.length <= 0) {
+      return Boolean(card['FOIL?']);
+    } else if(foil && colorsReference.length > 0) {
+      return Boolean(card['FOIL?']) && card.category.some(category => colorsReference.includes(category))
     }
     return card.category.some(category => colorsReference.includes(category));
   });
