@@ -10,8 +10,8 @@
       integrity="sha384-Zenh87qX5JnK2Jl0vWa8Ck2rdkQ2Bzep5IDxbcnCeuOxjzrPF/et3URy9Bv1WTRi"
       crossorigin="anonymous"
     />
-    <link rel="stylesheet" href="test.css" />
-    <link rel="icon" type="image/x-icon" href="./ico.png" />
+    <link rel="stylesheet" href="../test.css" />
+    <link rel="icon" type="image/x-icon" href="../ico.png" />
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css"
@@ -20,7 +20,7 @@
       referrerpolicy="no-referrer"
     />
   </head>
-  <body class="bg-dark text-light">
+  <body class="bg-dark text-light relative">
     <nav class="navbar navbar-dark navbar-expand-lg bg-dark shadow-lg">
       <div class="container-fluid">
         <a class="navbar-brand" href="/">Cards Faria</a>
@@ -38,25 +38,24 @@
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
           <ul class="navbar-nav me-auto mb-2 mb-lg-0">
             <li class="nav-item">
-              <a id="home-nav" class="nav-link active">Home</a>
+              <a id="home-nav" class="nav-link" aria-current="page">Home</a>
             </li>
             <li class="nav-item">
               <a id="filter-nav" class="nav-link">Filtrar cards</a>
             </li>
 
             <li class="nav-item">
-              <a id="cart-nav" class="nav-link">Meu carrinho</a>
+              <a id="cart-nav" class="nav-link active">Meu carrinho</a>
             </li>
           </ul>
         </div>
       </div>
     </nav>
-    <h2 class="text-center mt-5">Adicionadas Recentemente</h2>
-    <h4 id="loading" class="text-center">Carregando...</h4>
-    <h4 id="not-found-cards" class="text-center">
-      Nenhuma carta encontrada para o filtro.
+    <h2 class="text-center mt-5">Meu Carrinho</h2>
+    <h4 id="empty-cart-text" class="text-center mt-5 display: none;">
+      Não há nada em seu carrinho
     </h4>
-    <div class="container">
+    <div class="container d-flex flex-column">
       <div class="toast-container position-fixed top-0 end-0 p-3 rounded">
         <div
           id="liveToast"
@@ -78,14 +77,51 @@
           </div>
         </div>
       </div>
-      <div id="cardss" class="row"></div>
-      <button
-        type="button"
-        class="btn btn-dark btn-floating btn-lg"
-        id="btn-back-to-top"
-      >
-        <i class="fas fa-arrow-up"></i>
-      </button>
+      <div class="table-responsive" id="table">
+        <table class="table table-dark table-striped mt-5">
+          <thead>
+            <tr>
+              <th scope="col">Carta</th>
+              <th scope="col">Preço</th>
+              <th scope="col">Quantidade</th>
+              <th scope="col">Remover</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-cart"></tbody>
+        </table>
+      </div>
+      <div id="table-footer" class="d-flex flex-row justify-content-between">
+        <span id="total-text" style="font-size: 25px; display: none"
+          >Total:
+        </span>
+        <div class="d-flex flex-row gap-2">
+          <button
+            style="display: none"
+            id="copy-list"
+            class="btn btn-primary"
+            onclick="copyList()"
+          >
+            Copiar lista
+          </button>
+
+          <button
+            style="display: none"
+            id="clear-list"
+            class="btn btn-secondary"
+            onclick="clearList()"
+          >
+            Limpar lista
+          </button>
+        </div>
+
+        <a
+          href="whatsapp://send?text=YoYoYo"
+          style="display: none"
+          id="send-whatsapp"
+          class="btn btn-success"
+          >Enviar lista pelo whatsapp</a
+        >
+      </div>
     </div>
 
     <script
@@ -93,11 +129,6 @@
       integrity="sha384-OERcA2EqjJCMA+/3y+gxIOqMEjwtxJY7qPCqsdltbNJuaOe923+mo//f6V8Qbsw3"
       crossorigin="anonymous"
     ></script>
-    <script src="script-test.js"></script>
+    <script src="/cart/cart-script.js"></script>
   </body>
-
-  <script>
-    const currentPath2 = window.location.href.split("/")[3];
-    if (currentPath2.includes("pasta")) window.location.href = "/";
-  </script>
 </html>

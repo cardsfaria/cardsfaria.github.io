@@ -23,7 +23,7 @@
   <body class="bg-dark text-light relative">
     <nav class="navbar navbar-dark navbar-expand-lg bg-dark shadow-lg">
       <div class="container-fluid">
-        <a class="navbar-brand" href="#">Cards Faria</a>
+        <a class="navbar-brand" href="/">Cards Faria</a>
         <button
           class="navbar-toggler"
           type="button"
@@ -43,12 +43,37 @@
             <li class="nav-item">
               <a id="filter-nav" class="nav-link active">Filtrar cards</a>
             </li>
+
+            <li class="nav-item">
+              <a id="cart-nav" class="nav-link">Meu carrinho</a>
+            </li>
           </ul>
         </div>
       </div>
     </nav>
     <h2 class="text-center mt-5">Filtrar Cards</h2>
     <div class="container d-flex flex-column">
+      <div class="toast-container position-fixed top-0 end-0 p-3 rounded">
+        <div
+          id="liveToast"
+          class="toast"
+          role="alert"
+          aria-live="assertive"
+          aria-atomic="true"
+        >
+          <div class="ms-1 mt-1 mb-1 me-1">
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="toast"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="toast-body bg-secondary" id="cart-text">
+            Adicionado 1 ao carrinho.
+          </div>
+        </div>
+      </div>
       <div class="row">
         <div class="col-md-10">
           <div class="input-group mb-3">
@@ -92,7 +117,7 @@
             class="gap-lg-3 d-flex flex-column flex-lg-row mb-2 mt-2"
             id="cmc-filters"
           >
-            <span class="mt-2 mb-2">Filtro de Custo:</span>
+            <span class="mt-2">Filtro de Custo:</span>
           </div>
         </div>
         <div class="d-flex flex-row justify-content-between">

@@ -5,6 +5,7 @@ notFoundText.hidden = true;
 
 document.getElementById('filter-nav').href = `${'http://' + window.location.host + "/filtrar"}`
 document.getElementById('home-nav').href = `${'http://' + window.location.host + "/"}`
+document.getElementById('cart-nav').href = `${'http://' + window.location.host + "/cart"}`
 
 //Get the button
 let mybutton = document.getElementById("btn-back-to-top");
@@ -39,8 +40,6 @@ const hideFilter = () => {
   toggleButtonText();
   showFilterButton.onclick = showFilter;
   filters.style.display = 'none'; 
-
-
 }
  
 const toggleButtonText = () => {
@@ -63,36 +62,84 @@ const formatter = new Intl.NumberFormat('pt-BR', {
   currency: 'BRL',
 });
 
+
+const addToCart = (cardName) => {
+  const button = document.getElementById("cart-" + cardName);
+  const cartText = document.getElementById("cart-text");
+
+  const cards = JSON.parse(localStorage.getItem('cards'));
+  let card = cards.find(c => c.name === cardName);
+  const cart = JSON.parse(localStorage.getItem('cart')) || [];
+  
+  card.quantitySelected = 1;
+
+  const cardInCart = cart.find(c => c.name === cardName);
+  let text = 'Adicionado 1 unidade de ' + cardName + ' ao carrinho';
+  if(cardInCart) {
+    if(cardInCart.quantitySelected >= card.qty) {
+      cartText.innerHTML = 'Quantidade máxima atingida';
+      button.disabled;
+      return;
+    }
+    text = `Alterado a quantidade de ${cardInCart.quantitySelected} para ${ cardInCart.quantitySelected + 1} de ${cardName} no carrinho.`;
+
+    cardInCart.quantitySelected += 1;
+    card = cardInCart;
+    const cardIndex = cart.findIndex(c => c.name === cardName);
+    cart.splice(cardIndex, 1);
+  };
+
+  cartText.innerHTML = text;
+  cart.push(card);
+  const toastLiveExample = document.getElementById('liveToast')
+  const toast = new bootstrap.Toast(toastLiveExample)
+  toast.show();
+
+  localStorage.setItem('cart', JSON.stringify(cart));
+};
+
 const getCardTemplate = (card) =>  `
 <div class="col-md-4 col-sm-6 col-xs-12">
-  <div class="card">
-  <div class="card-info">
-    <span>${card.name}</span>
-  </div>
+  <div class="card position-relative">
+    <div class="card-info">
+      <span>${card.name}</span>
+    </div>
 
-  <div class="card-image-wrapper shadow">
-    <div class="card-image w-100">
-      <img
-        src="${card?.image ? card?.image : 'http://gatherer.wizards.com/Handlers/Image.ashx?multiverseid=' + card.id + '&type=card'}"
-      />
+    <div class="card-image-wrapper shadow">
+      <div class="card-image w-100">
+        <img
+          src="${card?.image ? card?.image : 'http://gatherer.wizards.com/Handlers/Image.ashx?multiverseid=' + card.id + '&type=card'}"
+        />
+      </div>
+      
+    </div>
+
+    <div class="card-info card-price">
+      <span>${formatter.format(card.price || 0)}</span>
     </div>
     
-  </div>
+    <div class="card-info card-qty">
+      <span>Qtde: ${card.qty}x</span>
+    </div>
+    <span class="text-danger text-center card-info2">${card.additionalInfo || '-'}</span>
+    <div class="position-absolute text-danger bottom-0 end-0 me-3 mb-3" style="font-size: 25px;">
+    <button
+      type="button"
+      class="btn btn-dark btn-floating btn-lg"
+      id="cart-${card.name}"
+      onclick="addToCart('${card.name}')"
+    >
+    <i class="fa-solid fa-cart-shopping"></i>
+  </button>
+     
+    </div>
 
-  <div class="card-info card-price">
-    <span>${formatter.format(card.price || 0)}</span>
-  </div>
-  <div class="card-info card-qty">
-    <span>Qtde: ${card.qty}x</span>
-  </div>
-  <span class="text-danger text-center card-info2">${card.additionalInfo || '-'}</span>
-  </div>
+    </div>
   </div>
 </div>
-   
-
 
 `
+
 
 const separeteCards = async (category = null) => {
   const cards = [];
@@ -127,6 +174,7 @@ const separeteCards = async (category = null) => {
                   } else {
                     card['C'] = 24;
                   }
+                  card['id'] = cards.length + 1;
 
                   cards.push(card);
                 }
@@ -135,6 +183,7 @@ const separeteCards = async (category = null) => {
     }
   localStorage.setItem('cards', JSON.stringify(cards));
   localStorage.setItem('lastModified', new Date());
+  localStorage.removeItem('cart');
   loading.hidden = true;
 
   return cards;
@@ -601,8 +650,6 @@ window.onscroll = async function() {
   }
   scrollFunction();
 };
-
-
 
 const checkIfHasSelected = (array, key = '') => {
 
