@@ -655,13 +655,12 @@ const createDomCards = (cards, container = 'cards-filter-row', noPaginate = fals
 
 
 (async () => {
-
+  
   if(currentPath.includes('filtrar')) {
     createFilter();
     createCMCFilter();
     createRaritiesFilter();
     createTypeFilter();
-    
   }
   const searchBtn = document.getElementById('search-btn');
   const resetBtn = document.getElementById('reset-btn');

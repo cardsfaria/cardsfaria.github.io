@@ -72,4 +72,9 @@
     ></script>
     <script src="script-test.js"></script>
   </body>
+
+  <script>
+    const currentPath2 = window.location.href.split("/")[3];
+    if (currentPath2.includes("pasta")) window.location.href = "/";
+  </script>
 </html>
