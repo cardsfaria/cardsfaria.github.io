@@ -562,7 +562,7 @@ const setOrder = (order, field, cards) => {
 
 const getRACards = () => {
   const cards = JSON.parse(localStorage.getItem('cards'));
-  return cards.filter(card => card['1598'] === 'RA').slice(0, 18);
+  return cards.filter(card => card['1598'] === 'RA');
 }
 
 const getColorsReference = (colors) => {
