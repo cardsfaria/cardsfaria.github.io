@@ -189,10 +189,10 @@ const separeteCards = async (category = null) => {
                
                 if(!card.category.includes('F') && !card.category.includes('RA')) {
                   card.price = parseFloat(card.price);
-                  if(card['C']) {
-                    card['C'] = parseInt(card['C']);
+                  if(card['Custo']) {
+                    card['Custo'] = parseInt(card['Custo']);
                   } else {
-                    card['C'] = 24;
+                    card['Custo'] = 24;
                   }
                   card['id'] = cards.length + 1;
 
@@ -479,12 +479,12 @@ const cmcFilterRow = (cards) => {
   }
 
   const cmcFilter = {
-    'cmc01': (card) => parseInt(card['C']) == 0 || parseInt(card['C']) == 1,
-    'cmc2': (card) => parseInt(card['C']) == 2,
-    'cmc3': (card) => parseInt(card['C']) == 3,
-    'cmc4': (card) => parseInt(card['C']) == 4,
-    'cmc5': (card) => parseInt(card['C']) == 5,
-    'cmc6': (card) => parseInt(card['C']) >= 6,
+    'cmc01': (card) => parseInt(card['Custo']) == 0 || parseInt(card['Custo']) == 1,
+    'cmc2': (card) => parseInt(card['Custo']) == 2,
+    'cmc3': (card) => parseInt(card['Custo']) == 3,
+    'cmc4': (card) => parseInt(card['Custo']) == 4,
+    'cmc5': (card) => parseInt(card['Custo']) == 5,
+    'cmc6': (card) => parseInt(card['Custo']) >= 6,
   }
 
 
