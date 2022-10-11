@@ -64,6 +64,9 @@ const formatter = new Intl.NumberFormat('pt-BR', {
 
 
 const addToCart = (cardName) => {
+
+  cardName = cardName.replace('#', "'");
+
   const button = document.getElementById("cart-" + cardName);
   const cartText = document.getElementById("cart-text");
 
@@ -126,8 +129,8 @@ const getCardTemplate = (card) =>  `
     <button
       type="button"
       class="btn btn-dark btn-floating btn-lg"
-      id="cart-${card.name}"
-      onclick="addToCart('${card.name}')"
+      id="cart-${card.name.replace("'", "#")}"
+      onclick="addToCart('${card.name.replace("'", "#")}')"
     >
     <i class="fa-solid fa-cart-shopping"></i>
   </button>
