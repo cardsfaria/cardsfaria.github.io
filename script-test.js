@@ -632,7 +632,13 @@ const setOrder = (order, field, cards) => {
 
 const getRACards = () => {
   const cards = JSON.parse(localStorage.getItem('cards'));
-  return cards.filter(card => card['RA'] === 'RA');
+  let ra = cards.filter(card => card['RAD'] === 'RA');
+  //ra = [];
+  if(ra.length > 0) return ra;
+
+  document.getElementById('not-found-cards-href').style.display = 'block';
+
+
 }
 
 const getColorsReference = (colors) => {
