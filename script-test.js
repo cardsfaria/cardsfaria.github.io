@@ -261,6 +261,7 @@ const getFiltersTemplate = (color) =>`
     {id: 'U', name: 'Incomum'},
     {id: 'R', name: 'Rara'},
     {id: 'M', name: 'Mitico-Rara'},
+    {id: 'E', name: 'Especial'},
   ]
 
   const getFiltersRarityTemplate = (rarity) =>`
@@ -403,7 +404,6 @@ const setFilters = async (setInHtml = false) => {
   }
   if(checkIfHasSelected(types, 'type-')) {
     cards = typesFilterRow(cards);
-
   }
   cards = orderCards(cards);
 
@@ -504,12 +504,14 @@ const rarityFilterRow = (cards) => {
   const incomum = document.getElementById('rare-U').checked;
   const rara = document.getElementById('rare-R').checked;
   const miticorara = document.getElementById('rare-M').checked;
+  const especial = document.getElementById('rare-E').checked;
   
   const raritiesCheck = {
     comum,
     incomum,
     rara,
     miticorara,
+    especial
   }
 
   if(Object.values(raritiesCheck).every(type => !type)) {
@@ -521,6 +523,7 @@ const rarityFilterRow = (cards) => {
     'incomum': (card) => card['Raridade'] === 'U',
     'rara': (card) => card['Raridade'] === 'R',
     'miticorara': (card) => card['Raridade'] === 'M',
+    'especial': (card) => card['Raridade'] === 'E',
   }
 
 
@@ -586,7 +589,7 @@ const handleChangedOrder = () => changedOrder = true;
 
 const orderCards = (cards) => {
   const orderElement = document.getElementById('order-select');
-  if(!orderElement || !orderElement.value) return cards;
+  if(!orderElement || !orderElement.value) return cards.sort((a, b) => b['category'].length - a['category'].length);
   const order = orderElement.value.split('-')[1];
   const field = orderElement.value.split('-')[0];
   return setOrder(order, field, cards);
@@ -598,28 +601,11 @@ const setOrder = (order, field, cards) => {
   if(field === 'name') {
     if(order === 'asc') {
       return cards.sort((a, b) => {
-        let tA = a[field].toUpperCase();
-        let tB = b[field].toUpperCase();
-        if (tA < tB) {
-          return -1;
-        }
-        if (tA > tB) {
-          return 1;
-        }
-        return 0;
+        return a.name.localeCompare(b.name)
       });
     }
-  
     return cards.sort((a, b) => {
-      let tA = a[field].toUpperCase();
-      let tB = b[field].toUpperCase();
-      if (tA > tB) {
-        return -1;
-      }
-      if (tA < tB) {
-        return 1;
-      }
-      return 0;
+      return b.name.localeCompare(a.name)
     });
   }
 
@@ -664,7 +650,6 @@ const getColorsReference = (colors) => {
 
 
 window.onscroll = async function() {
-  const search = document.getElementById('search')?.value;
   const cardsContainer = document.getElementById('cards-filter-row');
 
   if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 200 && cardsContainer.innerHTML) {
