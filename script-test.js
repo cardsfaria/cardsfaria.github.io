@@ -80,7 +80,17 @@ const addToCart = (cardName) => {
   let text = 'Adicionado 1 unidade de ' + cardName + ' ao carrinho';
   if(cardInCart) {
     if(cardInCart.quantitySelected >= card.qty) {
-      cartText.innerHTML = 'Quantidade máxima atingida';
+      Toastify({
+        text: 'Quantidade máxima atingida',
+        duration: 2000,
+        close: true,
+        gravity: "right", // `top` or `bottom`
+        position: "right", // `left`, `center` or `right`
+        stopOnFocus: true, // Prevents dismissing of toast on hover
+        style: {
+          background: "linear-gradient(to right, #FFD400, #FFDD3C)",
+        },
+      }).showToast();
       button.disabled;
       return;
     }
@@ -92,12 +102,19 @@ const addToCart = (cardName) => {
     cart.splice(cardIndex, 1);
   };
 
-  cartText.innerHTML = text;
+  
   cart.push(card);
-  const toastLiveExample = document.getElementById('liveToast')
-  const toast = new bootstrap.Toast(toastLiveExample)
-  toast.show();
-
+  Toastify({
+    text,
+    duration: 2000,
+    close: true,
+    gravity: "right", // `top` or `bottom`
+    position: "right", // `left`, `center` or `right`
+    stopOnFocus: true, // Prevents dismissing of toast on hover
+    style: {
+      background: "linear-gradient(to right, #00b09b, #96c93d)",
+    },
+  }).showToast();
   localStorage.setItem('cart', JSON.stringify(cart));
 };
 
@@ -202,7 +219,7 @@ const handleChangedCMC = () => changedCMC = true;
 const handleChangedRarity = () => changedRarity = true;
 const handleChangedType = () => changedType = true;
 
-const colors = [{id: 'red', name: 'Vermelho'}, { id: 'blue', name: 'Azul'}, { id: 'black', name: 'Preto'}, { id: 'white', name: 'Branco'}, { id: 'green', name: 'Verde'}, { id: 'golden', name: 'Dourado'}, { id: 'lands', name: 'Terrenos'}, { id: 'tokens', name: 'Tokens'}, { id: 'foil', name: 'Foil'}, { id: 'colorless', name: 'Colorless'}];
+const colors = [{id: 'red', name: 'Vermelho'}, { id: 'blue', name: 'Azul'}, { id: 'black', name: 'Preto'}, { id: 'white', name: 'Branco'}, { id: 'green', name: 'Verde'}, { id: 'lands', name: 'Terrenos'}, { id: 'tokens', name: 'Tokens'}, { id: 'foil', name: 'Foil'}, { id: 'colorless', name: 'Colorless'}];
 
 const getFiltersTemplate = (color) =>`
   <div class="form-check mt-2">

@@ -19,6 +19,11 @@
       crossorigin="anonymous"
       referrerpolicy="no-referrer"
     />
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css"
+    />
   </head>
   <body class="bg-dark text-light">
     <nav class="navbar navbar-dark navbar-expand-lg bg-dark shadow-lg">
@@ -57,27 +62,6 @@
       Nenhuma carta encontrada para o filtro.
     </h4>
     <div class="container">
-      <div class="toast-container position-fixed top-0 end-0 p-3 rounded">
-        <div
-          id="liveToast"
-          class="toast"
-          role="alert"
-          aria-live="assertive"
-          aria-atomic="true"
-        >
-          <div class="ms-1 mt-1 mb-1 me-1">
-            <button
-              type="button"
-              class="btn-close"
-              data-bs-dismiss="toast"
-              aria-label="Close"
-            ></button>
-          </div>
-          <div class="toast-body bg-secondary" id="cart-text">
-            Adicionado 1 ao carrinho.
-          </div>
-        </div>
-      </div>
       <div id="cardss" class="row"></div>
       <button
         type="button"
@@ -100,4 +84,8 @@
     const currentPath2 = window.location.href.split("/")[3];
     if (currentPath2.includes("pasta")) window.location.href = "/";
   </script>
+  <script
+    type="text/javascript"
+    src="https://cdn.jsdelivr.net/npm/toastify-js"
+  ></script>
 </html>

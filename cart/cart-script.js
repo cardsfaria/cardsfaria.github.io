@@ -5,7 +5,7 @@ const getCopyText = () => {
   const cart = JSON.parse(localStorage.getItem('cart')) || [];
   let text = 'Oi Faria, eu gostaria de reservar essas cartas: \n\n';
   cart.forEach((item) => {
-    text += `${item.name} - ${item.quantitySelected} - ${formatter.format(item.price)}\n`;
+    text += `${item.quantitySelected}x ${item.name} - ${formatter.format(item.price)}\n`;
   });
 
   text += `\nTotal: ${formatter.format(getCartTotal(cart))}`;
@@ -15,6 +15,18 @@ const getCopyText = () => {
 const copyList = () => {
   const text = getCopyText();
   navigator.clipboard.writeText(text);
+
+  Toastify({
+    text: 'Lista copiada com sucesso!',
+    duration: 2000,
+    close: true,
+    gravity: "right", // `top` or `bottom`
+    position: "right", // `left`, `center` or `right`
+    stopOnFocus: true, // Prevents dismissing of toast on hover
+    style: {
+      background: "linear-gradient(to right, #00b09b, #96c93d)",
+    },
+  }).showToast();
 }
 
 const emptyCartText = document.getElementById('empty-cart-text');
@@ -56,6 +68,9 @@ const renderCart = (cartParam = []) => {
     `;
     tbody.appendChild(tr);
   });
+
+  
+  document.getElementById('send-whatsapp').href = `https://wa.me/5531984113480?text=${encodeURIComponent(getCopyText())}`;
 }
 
 const mobileCheck = () => {
@@ -72,6 +87,7 @@ const emptyCart = () => {
   document.getElementById('copy-list').style.display = 'none';
   document.getElementById('clear-list').style.display = 'none';
   document.getElementById('send-whatsapp').style.display = 'none';
+  document.getElementById('send-whatsapp').href = '';
 
   return;
 }
@@ -110,7 +126,10 @@ const renderTotalText = () => {
 
   document.getElementById('copy-list').style.display = 'block';
   document.getElementById('clear-list').style.display = 'block';
-  //document.getElementById('send-whatsapp').style.display = 'block';
+  if(mobileCheck()) {
+    document.getElementById('send-whatsapp').style.display = 'block';
+
+  }
 }
 
 renderCart();
