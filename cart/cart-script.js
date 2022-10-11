@@ -5,7 +5,7 @@ const getCopyText = () => {
   const cart = JSON.parse(localStorage.getItem('cart')) || [];
   let text = 'Oi Faria, eu gostaria de reservar essas cartas: \n\n';
   cart.forEach((item) => {
-    text += `${item.quantitySelected}x ${item.name} - ${formatter.format(item.price)}\n`;
+    text += `${item.quantitySelected}x ${item.name} - ${formatter.format(item.price)} ${item.additionalInfo ? `- Extra: ${item.additionalInfo}` : ''}\n`;
   });
 
   text += `\nTotal: ${formatter.format(getCartTotal(cart))}`;
