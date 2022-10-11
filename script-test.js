@@ -219,7 +219,7 @@ const handleChangedCMC = () => changedCMC = true;
 const handleChangedRarity = () => changedRarity = true;
 const handleChangedType = () => changedType = true;
 
-const colors = [{id: 'red', name: 'Vermelho'}, { id: 'blue', name: 'Azul'}, { id: 'black', name: 'Preto'}, { id: 'white', name: 'Branco'}, { id: 'green', name: 'Verde'}, { id: 'lands', name: 'Terrenos'}, { id: 'tokens', name: 'Tokens'}, { id: 'foil', name: 'Foil'}, { id: 'colorless', name: 'Colorless'}];
+const colors = [{id: 'red', name: 'Vermelho'}, { id: 'blue', name: 'Azul'}, { id: 'black', name: 'Preto'}, { id: 'white', name: 'Branco'}, { id: 'green', name: 'Verde'}, { id: 'colorless', name: 'Colorless'}, { id: 'foil', name: 'Foil'}];
 
 const getFiltersTemplate = (color) =>`
   <div class="form-check mt-2">
@@ -284,6 +284,7 @@ const getFiltersTemplate = (color) =>`
     {id: 'T', name: 'Tokens'},
     {id: 'E', name: 'Encantamentos'},
     {id: 'P', name: 'Planeswalker'},
+    {id: 'L', name: 'Terrenos'},
   ]
 
   const getFiltersTypesTemplate = (type) =>`
@@ -357,13 +358,7 @@ const resetFilter = () => {
 
 const setFilters = async (setInHtml = false) => {
   const cardsContainer = document.getElementById('cards-filter-row');
-
-  if(!checkIfHasSelected(cmcs, 'cmc-') && !checkIfHasSelected(colors, '') && !checkIfHasSelected(rarities, 'rare-') && !checkIfHasSelected(types, 'type-')) {
-    lastSlice = 0;
-    notFoundText.hidden = false;
-    cardsContainer.innerHTML = '';
-    return;
-  }
+  let cards = JSON.parse(localStorage.getItem('cards'));
 
   notFoundText.hidden = true;
 
@@ -385,7 +380,6 @@ const setFilters = async (setInHtml = false) => {
     lastSlice = 0;
   }
 
-  
   if(changedRarity) {
     cardsContainer.innerHTML = '';
     changedRarity = false;
@@ -396,13 +390,21 @@ const setFilters = async (setInHtml = false) => {
     changedType = false;
     lastSlice = 0;
   }
-  
-  let cards = JSON.parse(localStorage.getItem('cards'));
 
-  cards = cardsFilterRow(cards);
-  cards = cmcFilterRow(cards);
-  cards = rarityFilterRow(cards);
-  cards = typesFilterRow(cards);
+  if(checkIfHasSelected(colors, '')) {
+    cards = cardsFilterRow(cards);
+
+  }
+  if(checkIfHasSelected(cmcs, 'cmc-')) {
+    cards = cmcFilterRow(cards);
+  }
+  if(checkIfHasSelected(rarities, 'rare-')) {
+    cards = rarityFilterRow(cards);
+  }
+  if(checkIfHasSelected(types, 'type-')) {
+    cards = typesFilterRow(cards);
+
+  }
   cards = orderCards(cards);
 
   if(setInHtml) {
@@ -421,9 +423,6 @@ const cardsFilterRow = (cards) => {
   const black = document.getElementById('black').checked;
   const white = document.getElementById('white').checked;
   const green = document.getElementById('green').checked;
-  const golden = document.getElementById('golden').checked;
-  const lands = document.getElementById('lands').checked;
-  const tokens = document.getElementById('tokens').checked;
   const foil = document.getElementById('foil').checked;
   const colorless = document.getElementById('colorless').checked;
  
@@ -433,9 +432,6 @@ const cardsFilterRow = (cards) => {
     black,
     white,
     green,
-    golden,
-    lands,
-    tokens,
     colorless
   }
 
@@ -547,6 +543,7 @@ const typesFilterRow = (cards) => {
   const tokens = document.getElementById('type-T').checked;
   const encantamentos = document.getElementById('type-E').checked;
   const planeswalker = document.getElementById('type-P').checked;
+  const lands = document.getElementById('type-L').checked;
   
   const typesCheck = {
     feitico,
@@ -555,7 +552,8 @@ const typesFilterRow = (cards) => {
     artefato,
     tokens,
     encantamentos,
-    planeswalker
+    planeswalker,
+    lands
   }
 
   if(Object.values(typesCheck).every(type => !type)) {
@@ -568,6 +566,7 @@ const typesFilterRow = (cards) => {
     instantanea: (card) => card['Tipo'] === 'I',
     artefato: (card) => card['Tipo'] === 'A',
     tokens: (card) => card['Tipo'] === 'T',
+    lands: (card) => card['Tipo'] === 'L',
     encantamentos: (card) => card['Tipo'] === 'E',
     planeswalker: (card) => card['Tipo'] === 'P'
   }
@@ -644,9 +643,6 @@ const getColorsReference = (colors) => {
     black: 'B',
     white: 'W',
     green: 'G',
-    golden: 'D',
-    lands: 'L',
-    tokens: 'T',
     colorless: 'C'
   }
 
@@ -665,7 +661,7 @@ window.onscroll = async function() {
   const search = document.getElementById('search')?.value;
   const cardsContainer = document.getElementById('cards-filter-row');
 
-  if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 200 && !search && (checkIfHasSelected(cmcs, 'cmc-') || checkIfHasSelected(colors, '') || checkIfHasSelected(rarities, 'rare-') || checkIfHasSelected(types, 'type-')) && cardsContainer.innerHTML) {
+  if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 200 && cardsContainer.innerHTML) {
     createDomCards(await setFilters(false), 'cards-filter-row');
   }
   scrollFunction();
