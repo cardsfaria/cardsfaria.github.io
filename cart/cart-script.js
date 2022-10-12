@@ -18,7 +18,7 @@ const copyList = () => {
 
   Toastify({
     text: 'Lista copiada com sucesso!',
-    duration: 2000,
+    duration: 1000,
     close: true,
     gravity: "right", // `top` or `bottom`
     position: "right", // `left`, `center` or `right`
@@ -64,7 +64,15 @@ const renderCart = (cartParam = []) => {
       <td>${item.name}</td>
       <td>${formatter.format(item.price || 0)}</td>
       <td>${item.quantitySelected}</td>
-      <td><i style="cursor: pointer;" onclick="removeItemFromCart('${item.name}')" class="fa-solid fa-trash text-danger"></i></td>
+      <td>${item.additionalInfo}</td>
+      <td>
+        <i style="cursor: pointer;" data-toggle="tooltip-btn-trash" onclick="removeItemFromCart('${item.id}')" class="fa-solid fa-trash text-danger"></i>
+
+        <i style="cursor: pointer;" onclick="addOneItemCart('${item.id}')" class="fa-solid fa-add text-success"></i>
+
+        <i style="cursor: pointer;" onclick="removeOneItemFromCart('${item.id}')" class="fa-solid fa-minus text-warning"></i>
+
+      </td>
     `;
     tbody.appendChild(tr);
   });
@@ -88,22 +96,114 @@ const emptyCart = () => {
   document.getElementById('clear-list').style.display = 'none';
   document.getElementById('send-whatsapp').style.display = 'none';
   document.getElementById('send-whatsapp').href = '';
-
+  Toastify({
+    text: 'Carrinho limpado com sucesso!',
+    duration: 1000,
+    close: true,
+    gravity: "right", // `top` or `bottom`
+    position: "right", // `left`, `center` or `right`
+    stopOnFocus: true, // Prevents dismissing of toast on hover
+    style: {
+      background: "linear-gradient(to right, #00b09b, #96c93d)",
+    },
+  }).showToast();
   return;
 }
 
-const removeItemFromCart = (itemName) => {
+const removeItemFromCart = (itemId) => {
 
   const cart = JSON.parse(localStorage.getItem('cart')) || [];
-  const newCart = cart.filter((item) => item.name !== itemName);
+  const item = cart.find((item) => item.id == itemId);
+  const newCart = cart.filter((item) => item.id != itemId);
+  Toastify({
+    text: `Removido ${item.name} com sucesso!`,
+    duration: 1000,
+    close: true,
+    gravity: "right", // `top` or `bottom`
+    position: "right", // `left`, `center` or `right`
+    stopOnFocus: true, // Prevents dismissing of toast on hover
+    style: {
+      background: "linear-gradient(to right, #00b09b, #96c93d)",
+    },
+  }).showToast();
+
   if(newCart.length <= 0) {
+    
     emptyCart();
     return;
   }
   localStorage.setItem('cart', JSON.stringify(newCart));
   tbody.innerHTML = '';
-  console.log(newCart);
   renderCart(newCart);
+  
+}
+
+const addOneItemCart = (itemId) => {
+
+  const cart = JSON.parse(localStorage.getItem('cart')) || [];
+  const item = cart.find((item) => item.id == itemId);
+  if(item.quantitySelected >= parseInt(item.qty)) {
+    Toastify({
+      text: 'Quantidade máxima atingida',
+      duration: 1000,
+      close: true,
+      gravity: "right", // `top` or `bottom`
+      position: "right", // `left`, `center` or `right`
+      stopOnFocus: true, // Prevents dismissing of toast on hover
+      style: {
+        background: "linear-gradient(to right, #FFD400, #FFDD3C)",
+      },
+    }).showToast();
+    return;
+  }
+
+
+  Toastify({
+    text: `Adicionado mais 1 ${item.name} com sucesso!`,
+    duration: 1000,
+    close: true,
+    gravity: "right", // `top` or `bottom`
+    position: "right", // `left`, `center` or `right`
+    stopOnFocus: true, // Prevents dismissing of toast on hover
+    style: {
+      background: "linear-gradient(to right, #00b09b, #96c93d)",
+    },
+  }).showToast();
+
+  const cardIndex = cart.findIndex(c => c.id == item.id);
+  cart[cardIndex].quantitySelected += 1;
+
+  localStorage.setItem('cart', JSON.stringify(cart));
+  tbody.innerHTML = '';
+  renderCart(cart);
+}
+
+const removeOneItemFromCart = (itemId) => {
+  const cart = JSON.parse(localStorage.getItem('cart')) || [];
+  const item = cart.find((item) => item.id == itemId);
+
+  if(item.quantitySelected <= 1) {
+    removeItemFromCart(itemId);
+    return;
+  }
+
+  Toastify({
+    text: `Removido 1 ${item.name} com sucesso!`,
+    duration: 1000,
+    close: true,
+    gravity: "right", // `top` or `bottom`
+    position: "right", // `left`, `center` or `right`
+    stopOnFocus: true, // Prevents dismissing of toast on hover
+    style: {
+      background: "linear-gradient(to right, #00b09b, #96c93d)",
+    },
+  }).showToast();
+  const cardIndex = cart.findIndex(c => c.id == item.id);
+  cart[cardIndex].quantitySelected -= 1;
+
+  localStorage.setItem('cart', JSON.stringify(cart));
+  tbody.innerHTML = '';
+  renderCart(cart);
 }
 
 const getCartTotal = (cart) => {

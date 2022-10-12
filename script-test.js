@@ -63,23 +63,20 @@ const formatter = new Intl.NumberFormat('pt-BR', {
 });
 
 
-const addToCart = (cardName) => {
+const addToCart = (cardId) => {
 
-  cardName = cardName.replace('#', "'");
-
-  const button = document.getElementById("cart-" + cardName);
-  const cartText = document.getElementById("cart-text");
+  const button = document.getElementById("cart-" + cardId);
 
   const cards = JSON.parse(localStorage.getItem('cards'));
-  let card = cards.find(c => c.name === cardName);
+  let card = cards.find(c => c.id == cardId);
   const cart = JSON.parse(localStorage.getItem('cart')) || [];
   
   card.quantitySelected = 1;
 
-  const cardInCart = cart.find(c => c.name === cardName);
-  let text = 'Adicionado 1 unidade de ' + cardName + ' ao carrinho';
+  const cardInCart = cart.find(c => c.id == cardId);
+  let text = 'Adicionado 1 unidade de ' + card.name + ' ao carrinho';
   if(cardInCart) {
-    if(cardInCart.quantitySelected >= card.qty) {
+    if(cardInCart.quantitySelected >= parseInt(card.qty)) {
       Toastify({
         text: 'Quantidade máxima atingida',
         duration: 2000,
@@ -94,13 +91,13 @@ const addToCart = (cardName) => {
       button.disabled;
       return;
     }
-    text = `Alterado a quantidade de ${cardInCart.quantitySelected} para ${ cardInCart.quantitySelected + 1} de ${cardName} no carrinho.`;
+    text = `Alterado a quantidade de ${cardInCart.quantitySelected} para ${ cardInCart.quantitySelected + 1} de ${cardInCart.name} no carrinho.`;
 
     cardInCart.quantitySelected += 1;
     card = cardInCart;
-    const cardIndex = cart.findIndex(c => c.name === cardName);
+    const cardIndex = cart.findIndex(c => c.id == cardId);
     cart.splice(cardIndex, 1);
-  };
+  }
 
   
   cart.push(card);
@@ -146,8 +143,8 @@ const getCardTemplate = (card) =>  `
     <button
       type="button"
       class="btn btn-dark btn-floating btn-lg"
-      id="cart-${card.name.replace("'", "#")}"
-      onclick="addToCart('${card.name.replace("'", "#")}')"
+      id="cart-${card.id}"
+      onclick="addToCart('${card.id}')"
     >
     <i class="fa-solid fa-cart-shopping"></i>
   </button>
@@ -258,7 +255,7 @@ const getFiltersTemplate = (color) =>`
 
   const rarities = [
     {id: 'C', name: 'Comum'},
-    {id: 'U', name: 'Incomum'},
+    {id: 'I', name: 'Incomum'},
     {id: 'R', name: 'Rara'},
     {id: 'M', name: 'Mitico-Rara'},
     {id: 'E', name: 'Especial'},
@@ -501,7 +498,7 @@ const cmcFilterRow = (cards) => {
 const rarityFilterRow = (cards) => {
   
   const comum = document.getElementById('rare-C').checked;
-  const incomum = document.getElementById('rare-U').checked;
+  const incomum = document.getElementById('rare-I').checked;
   const rara = document.getElementById('rare-R').checked;
   const miticorara = document.getElementById('rare-M').checked;
   const especial = document.getElementById('rare-E').checked;
@@ -520,7 +517,7 @@ const rarityFilterRow = (cards) => {
 
   const raritiesFilter = {
     'comum': (card) => card['Raridade'] === 'C',
-    'incomum': (card) => card['Raridade'] === 'U',
+    'incomum': (card) => card['Raridade'] === 'I',
     'rara': (card) => card['Raridade'] === 'R',
     'miticorara': (card) => card['Raridade'] === 'M',
     'especial': (card) => card['Raridade'] === 'E',

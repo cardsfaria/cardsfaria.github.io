@@ -68,14 +68,21 @@
               <th scope="col">Carta</th>
               <th scope="col">Preço</th>
               <th scope="col">Quantidade</th>
-              <th scope="col">Remover</th>
+              <th scope="col">Extra</th>
+              <th scope="col">Ações</th>
             </tr>
           </thead>
           <tbody id="tbody-cart"></tbody>
         </table>
       </div>
-      <div id="table-footer" class="d-flex flex-row justify-content-between">
-        <span id="total-text" style="font-size: 25px; display: none"
+      <div
+        id="table-footer"
+        class="d-flex flex-column flex-md-row justify-content-between"
+      >
+        <span
+          id="total-text"
+          style="font-size: 25px; display: none"
+          class="text-center mt-2 mb-2"
           >Total:
         </span>
         <div class="d-flex flex-row gap-2">
@@ -96,15 +103,14 @@
           >
             Limpar lista
           </button>
+          <a
+            href="whatsapp://send?text=YoYoYo"
+            style="display: none"
+            id="send-whatsapp"
+            class="btn btn-success"
+            >Enviar lista pelo whatsapp</a
+          >
         </div>
-
-        <a
-          href="whatsapp://send?text=YoYoYo"
-          style="display: none"
-          id="send-whatsapp"
-          class="btn btn-success"
-          >Enviar lista pelo whatsapp</a
-        >
       </div>
     </div>
 
