@@ -442,11 +442,26 @@ const cardsFilterRow = (cards) => {
     if(foil && colorsReference.length <= 0) {
       return Boolean(card['FOIL?']);
     } else if(foil && colorsReference.length > 0) {
-      return Boolean(card['FOIL?']) && card.category.some(category => colorsReference.includes(category))
+      return Boolean(card['FOIL?']) && getCardsWithSameColors(colorsReference, card)
     }
-    return card.category.some(category => colorsReference.includes(category));
+    return getCardsWithSameColors(colorsReference, card);
   });
   
+}
+
+const getCardsWithSameColors = (colors, card) => {
+  const cardColors = card.category;
+  const cardColorsLength = cardColors.length;
+  const colorsLength = colors.length;
+  if(cardColorsLength === colorsLength) {
+    return cardColors.every(color => colors.includes(color));
+  }
+  if(cardColorsLength > colorsLength) {
+    return false;
+  }
+  if(cardColors.length === 1) {
+    return colors.includes(cardColors[0]);
+  }
 }
 
 const checkIfCardHasCMC = (card) => {
