@@ -36,18 +36,20 @@ const formatter = new Intl.NumberFormat('pt-BR', {
   currency: 'BRL',
 });
 
+
 const renderCart = (cartParam = []) => {
   const cart = JSON.parse(localStorage.getItem('cart')) || [];
   let cartArray = cartParam;
+  
   if(cartParam.length <= 0) {
     cartArray = cart;
   }
-
-  renderTotalText();
   if(cartArray.length <= 0) {
-    emptyCart();
+    emptyCart(false);
     return;
   }
+  renderTotalText();
+  
 
   emptyCartText.style.display = 'none';
   tbody.innerHTML = '';
@@ -81,7 +83,7 @@ const mobileCheck = () => {
   return check;
 };
 
-const emptyCart = () => {
+const emptyCart = (showMessage = true) => {
   localStorage.removeItem('cart');
   table.innerHTML = '';
   emptyCartText.style.display = 'block';
@@ -90,18 +92,20 @@ const emptyCart = () => {
   document.getElementById('clear-list').style.display = 'none';
   document.getElementById('send-whatsapp').style.display = 'none';
   document.getElementById('send-whatsapp').href = '';
-  Toastify({
-    text: 'Carrinho limpado com sucesso!',
-    duration: 1000,
-    close: true,
-    gravity: "right", // `top` or `bottom`
-    position: "right", // `left`, `center` or `right`
-    stopOnFocus: true, // Prevents dismissing of toast on hover
-    style: {
-      background: "linear-gradient(to right, #00b09b, #96c93d)",
-    },
-  }).showToast();
-  return;
+  if(showMessage) {
+    Toastify({
+      text: 'Carrinho limpado com sucesso!',
+      duration: 1000,
+      close: true,
+      gravity: "right", // `top` or `bottom`
+      position: "right", // `left`, `center` or `right`
+      stopOnFocus: true, // Prevents dismissing of toast on hover
+      style: {
+        background: "linear-gradient(to right, #00b09b, #96c93d)",
+      },
+    }).showToast();
+  }
+  
 }
 
 const removeItemFromCart = (itemId) => {

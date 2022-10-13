@@ -61,9 +61,15 @@ Ex.: 1 Avacyn, Angel of Hope
 
 A busca não diferencia maiúsculas de minúsculas e nem avaliará a quantidade dos cards."
       ></textarea>
-      <button onclick="searchForList()" class="btn btn-primary mt-2">
-        Buscar
-      </button>
+      <div class="d-flex flex-column flex-lg-row gap-2">
+        <button onclick="searchForList()" class="btn btn-primary mt-2">
+          Buscar
+        </button>
+
+        <button onclick="addFoundsToCart()" class="btn btn-success mt-2">
+          Adicionar todas encontradas ao carrinho
+        </button>
+      </div>
     </div>
 
     <!-- Button trigger modal -->
@@ -115,7 +121,7 @@ A busca não diferencia maiúsculas de minúsculas e nem avaliará a quantidade 
       </div>
     </div>
 
-    <h4 id="loading" class="text-center">Carregando...</h4>
+    <h4 id="loading" class="text-center mt-3">Carregando...</h4>
     <div class="container">
       <div id="cards-filter-row" class="row"></div>
     </div>

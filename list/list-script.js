@@ -36,6 +36,7 @@ const searchForList = () => {
   const arrayList = list.split("\n");
 
   arrayList.forEach(card => {
+    if(!card) return;
     const name = (removeFirstWord(card)).toLowerCase();
     const foundCard = cards.find(item => item.name.toLowerCase() === name);
     if(foundCard) {
@@ -54,6 +55,64 @@ const searchForList = () => {
   }
 
   createDomCards(foundCards, 'cards-filter-row');
+}
+
+const addFoundsToCart = () => {
+
+  if(foundCards.length <= 0) {
+    Toastify({
+      text: 'Nenhuma carta encontrada, faça a busca primeiro.',
+      duration: 2000,
+      close: true,
+      gravity: "right", // `top` or `bottom`
+      position: "right", // `left`, `center` or `right`
+      stopOnFocus: true, // Prevents dismissing of toast on hover
+      style: {
+        background: "linear-gradient(to right, #FFD400, #FFDD3C)",
+      },
+    }).showToast();
+    return;
+  }
+
+  const cart = JSON.parse(localStorage.getItem('cart')) || [];
+  let addedCards = 0;
+  foundCards.forEach(card => {
+    const foundCard = cart.find(item => item.id === card.id);
+     if(!foundCard) {
+      card.quantitySelected = 1;
+      cart.push(card);
+      addedCards++;
+    }
+  });
+
+  if(addedCards === 0) {
+    return Toastify({
+      text: `Nenhuma carta adicionada, o limite de todas foi atingido.`,
+      duration: 1000,
+      close: true,
+      gravity: "right", // `top` or `bottom`
+      position: "right", // `left`, `center` or `right`
+      stopOnFocus: true, // Prevents dismissing of toast on hover
+      style: {
+        background: "linear-gradient(to right, #00b09b, #96c93d)",
+      },
+    }).showToast();
+  }
+
+  localStorage.setItem('cart', JSON.stringify(cart));
+
+  Toastify({
+    text: `Adicionado ${addedCards} cards ao carrinho!`,
+    duration: 1000,
+    close: true,
+    gravity: "right", // `top` or `bottom`
+    position: "right", // `left`, `center` or `right`
+    stopOnFocus: true, // Prevents dismissing of toast on hover
+    style: {
+      background: "linear-gradient(to right, #00b09b, #96c93d)",
+    },
+  }).showToast();
+
 }
 
 const removeFirstWord = (str) => {
