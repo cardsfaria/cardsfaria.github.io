@@ -173,6 +173,7 @@ const resetFilter = () => {
 let lastSearch = '';
 
 const setFilters = async (setInHtml = false) => {
+  hideFilter();
   const cardsContainer = document.getElementById('cards-filter-row');
   let cards = JSON.parse(localStorage.getItem('cards'));
 
