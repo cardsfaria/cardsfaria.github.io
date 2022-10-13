@@ -232,7 +232,7 @@ const setFilters = async (setInHtml = false) => {
       lastSlice = 0;
     }
 
-    cards = cards.filter(card => card.name.toLowerCase().includes(search.toLowerCase()));
+    cards = cards.filter(card => card.name.toLowerCase().includes(search.toLowerCase()) || card['Nome Portugues'].toLowerCase().includes(search.toLowerCase()));
   }
 
   if(cards.length <= 0) notFoundText.hidden = false;

@@ -38,7 +38,7 @@ const searchForList = () => {
   arrayList.forEach(card => {
     if(!card) return;
     const name = (removeFirstWord(card)).toLowerCase();
-    const foundCard = cards.find(item => item.name.toLowerCase() === name);
+    const foundCard = cards.find(item => item.name.toLowerCase() === name || card['Nome Portugues'].toLowerCase() === name);
     if(foundCard) {
       foundCards.push(foundCard);
     } else {
