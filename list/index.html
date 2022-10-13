@@ -45,63 +45,88 @@
         </div>
       </div>
     </nav>
-    <h2 class="text-center mt-5">Meu Carrinho</h2>
-    <h4 id="empty-cart-text" class="text-center mt-5 display: none;">
-      Não há nada em seu carrinho
-    </h4>
-    <div class="container d-flex flex-column">
-      <div class="table-responsive" id="table">
-        <table class="table table-dark table-striped mt-5">
-          <thead>
-            <tr>
-              <th scope="col">Carta</th>
-              <th scope="col">Preço</th>
-              <th scope="col">Quantidade</th>
-              <th scope="col">Extra</th>
-              <th scope="col">Ações</th>
-            </tr>
-          </thead>
-          <tbody id="tbody-cart"></tbody>
-        </table>
-      </div>
-      <div
-        id="table-footer"
-        class="d-flex flex-column flex-md-row justify-content-between"
-      >
-        <span
-          id="total-text"
-          style="font-size: 25px; display: none"
-          class="text-center mt-2 mb-2"
-          >Total:
-        </span>
-        <div class="d-flex flex-row gap-2">
-          <button
-            style="display: none"
-            id="copy-list"
-            class="btn btn-primary"
-            onclick="copyList()"
-          >
-            Copiar lista
-          </button>
+    <h2 class="text-center mt-5">Busca por lista</h2>
+    <div class="container">
+      <label for="card-list" class="form-label">Lista de cards</label>
+      <textarea
+        class="form-control"
+        id="card-list"
+        rows="15"
+        placeholder="Preencha no modelo [Quantidade] [Card].
+Ou apenas [Card].
 
-          <button
-            style="display: none"
-            id="clear-list"
-            class="btn btn-secondary"
-            onclick="clearList()"
-          >
-            Limpar lista
-          </button>
-          <a
-            href="whatsapp://send?text=YoYoYo"
-            style="display: none"
-            id="send-whatsapp"
-            class="btn btn-success"
-            >Enviar lista pelo whatsapp</a
-          >
+Ex.: 4 Birds of Paradise
+Ex.: Dark Ritual
+Ex.: 1 Avacyn, Angel of Hope
+
+A busca não diferencia maiúsculas de minúsculas e nem avaliará a quantidade dos cards."
+      ></textarea>
+      <button onclick="searchForList()" class="btn btn-primary mt-2">
+        Buscar
+      </button>
+    </div>
+
+    <!-- Button trigger modal -->
+    <button
+      type="button"
+      id="modal-button"
+      class="btn btn-primary"
+      data-bs-toggle="modal"
+      data-bs-target="#staticBackdrop"
+      style="display: none"
+    >
+      Launch static backdrop modal
+    </button>
+
+    <!-- Modal -->
+    <div
+      class="modal fade"
+      id="staticBackdrop"
+      data-bs-backdrop="static"
+      data-bs-keyboard="false"
+      tabindex="-1"
+      aria-labelledby="staticBackdropLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog text-dark">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="staticBackdropLabel">
+              Cards não encontrados
+            </h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body"><ul id="modal-text"></ul></div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              Fechar
+            </button>
+          </div>
         </div>
       </div>
     </div>
+
+    <h4 id="loading" class="text-center">Carregando...</h4>
+    <div class="container">
+      <div id="cards-filter-row" class="row"></div>
+    </div>
+
+    <button
+      type="button"
+      class="btn btn-dark btn-floating btn-lg"
+      id="btn-back-to-top"
+    >
+      <i class="fas fa-arrow-up"></i>
+    </button>
 
     <script
       src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js"
@@ -109,7 +134,11 @@
       crossorigin="anonymous"
     ></script>
     <script src="/menu-script.js"></script>
-    <script src="/cart/cart-script.js"></script>
+
+    <script src="/list/list-script.js"></script>
+
+    <script src="/cards-script.js"></script>
+
     <script
       type="text/javascript"
       src="https://cdn.jsdelivr.net/npm/toastify-js"

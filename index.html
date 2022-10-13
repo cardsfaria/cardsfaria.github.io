@@ -41,27 +41,13 @@
           <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
-          <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-            <li class="nav-item">
-              <a id="home-nav" class="nav-link active">Home</a>
-            </li>
-            <li class="nav-item">
-              <a id="filter-nav" class="nav-link">Filtrar cards</a>
-            </li>
-
-            <li class="nav-item">
-              <a id="cart-nav" class="nav-link">Meu carrinho</a>
-            </li>
-          </ul>
+          <ul class="navbar-nav me-auto mb-2 mb-lg-0" id="menu"></ul>
         </div>
       </div>
     </nav>
     <h2 class="text-center mt-5">Adicionadas Recentemente</h2>
     <h4 id="loading" class="text-center">Carregando...</h4>
-    <h4 id="not-found-cards" class="text-center">
-      Nenhuma carta encontrada para o filtro.
-      <a>Clique a aqui para</a>
-    </h4>
+    <h4 id="not-found-cards" class="text-center">Nenhuma carta encontrada.</h4>
     <a
       id="not-found-cards-href"
       class="text-center"
@@ -86,6 +72,8 @@
       integrity="sha384-OERcA2EqjJCMA+/3y+gxIOqMEjwtxJY7qPCqsdltbNJuaOe923+mo//f6V8Qbsw3"
       crossorigin="anonymous"
     ></script>
+    <script src="/menu-script.js"></script>
+    <script src="/cards-script.js"></script>
     <script src="script-test.js"></script>
   </body>
 

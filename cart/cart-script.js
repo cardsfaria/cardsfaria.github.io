@@ -36,12 +36,6 @@ const formatter = new Intl.NumberFormat('pt-BR', {
   currency: 'BRL',
 });
 
-const currentPath = window.location.href.split('/')[3];
-
-document.getElementById('filter-nav').href = `${'http://' + window.location.host + "/filtrar"}`
-document.getElementById('home-nav').href = `${'http://' + window.location.host + "/"}`
-document.getElementById('cart-nav').href = `${'http://' + window.location.host + "/cart"}`
-
 const renderCart = (cartParam = []) => {
   const cart = JSON.parse(localStorage.getItem('cart')) || [];
   let cartArray = cartParam;

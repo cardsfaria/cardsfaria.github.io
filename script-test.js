@@ -1,31 +1,6 @@
-const currentPath = window.location.href.split('/')[3];
 
 const notFoundText = document.getElementById('not-found-cards');
 notFoundText.hidden = true;
-
-document.getElementById('filter-nav').href = `${'http://' + window.location.host + "/filtrar"}`
-document.getElementById('home-nav').href = `${'http://' + window.location.host + "/"}`
-document.getElementById('cart-nav').href = `${'http://' + window.location.host + "/cart"}`
-
-//Get the button
-let mybutton = document.getElementById("btn-back-to-top");
-
-function scrollFunction() {
-  if(!mybutton) return;
-
-  if (
-    document.body.scrollTop > 20 ||
-    document.documentElement.scrollTop > 20
-  ) {
-    mybutton.style.display = "block";
-  } else {
-    mybutton.style.display = "none";
-  }
-}
-
-if(mybutton) {
-  mybutton.addEventListener("click", backToTop);
-}
 
 const showFilterButton = document.getElementById('show-filter-button');
 const filters = document.getElementById('filters');
@@ -47,166 +22,7 @@ const toggleButtonText = () => {
   showFilterButton.innerText = text;
 }
 
-function backToTop() {
-  document.body.scrollTop = 0;
-  document.documentElement.scrollTop = 0;
-}
 
-const getCards = () => {
-
-  return fetch("//magicshowcase.apphb.com/home/proxy?address=https%3A%2F%2Fdocs.google.com%2Fspreadsheets%2Fd%2F1T7MpDLrNndOFKDnzEZvG0tFDsphZx6BW7Qg-o4xmr_o%2Fpub%3Fgid%3D0%26single%3Dtrue%26output%3Dtsv");
-};
-
-const formatter = new Intl.NumberFormat('pt-BR', {
-  style: 'currency',
-  currency: 'BRL',
-});
-
-
-const addToCart = (cardId) => {
-
-  const button = document.getElementById("cart-" + cardId);
-
-  const cards = JSON.parse(localStorage.getItem('cards'));
-  let card = cards.find(c => c.id == cardId);
-  const cart = JSON.parse(localStorage.getItem('cart')) || [];
-  
-  card.quantitySelected = 1;
-
-  const cardInCart = cart.find(c => c.id == cardId);
-  let text = 'Adicionado 1 unidade de ' + card.name + ' ao carrinho';
-  if(cardInCart) {
-    if(cardInCart.quantitySelected >= parseInt(card.qty)) {
-      Toastify({
-        text: 'Quantidade máxima atingida',
-        duration: 2000,
-        close: true,
-        gravity: "right", // `top` or `bottom`
-        position: "right", // `left`, `center` or `right`
-        stopOnFocus: true, // Prevents dismissing of toast on hover
-        style: {
-          background: "linear-gradient(to right, #FFD400, #FFDD3C)",
-        },
-      }).showToast();
-      button.disabled;
-      return;
-    }
-    text = `Alterado a quantidade de ${cardInCart.quantitySelected} para ${ cardInCart.quantitySelected + 1} de ${cardInCart.name} no carrinho.`;
-
-    cardInCart.quantitySelected += 1;
-    card = cardInCart;
-    const cardIndex = cart.findIndex(c => c.id == cardId);
-    cart.splice(cardIndex, 1);
-  }
-
-  
-  cart.push(card);
-  Toastify({
-    text,
-    duration: 2000,
-    close: true,
-    gravity: "right", // `top` or `bottom`
-    position: "right", // `left`, `center` or `right`
-    stopOnFocus: true, // Prevents dismissing of toast on hover
-    style: {
-      background: "linear-gradient(to right, #00b09b, #96c93d)",
-    },
-  }).showToast();
-  localStorage.setItem('cart', JSON.stringify(cart));
-};
-
-const getCardTemplate = (card) =>  `
-<div class="col-md-4 col-sm-6 col-xs-12">
-  <div class="card position-relative">
-    <div class="card-info">
-      <span>${card.name}</span>
-    </div>
-
-    <div class="card-image-wrapper shadow">
-      <div class="card-image w-100">
-        <img
-          src="${card?.image ? card?.image : 'http://gatherer.wizards.com/Handlers/Image.ashx?multiverseid=' + card.id + '&type=card'}"
-        />
-      </div>
-      
-    </div>
-
-    <div class="card-info card-price">
-      <span>${formatter.format(card.price || 0)}</span>
-    </div>
-    
-    <div class="card-info card-qty">
-      <span>Qtde: ${card.qty}x</span>
-    </div>
-    <span class="text-danger text-center card-info2">${card.additionalInfo || '-'}</span>
-    <div class="position-absolute text-danger bottom-0 end-0 me-3 mb-3" style="font-size: 25px;">
-    <button
-      type="button"
-      class="btn btn-dark btn-floating btn-lg"
-      id="cart-${card.id}"
-      onclick="addToCart('${card.id}')"
-    >
-    <i class="fa-solid fa-cart-shopping"></i>
-  </button>
-     
-    </div>
-
-    </div>
-  </div>
-</div>
-
-`
-
-
-const separeteCards = async (category = null) => {
-  const cards = [];
-
-  const loading = document.getElementById('loading');
-
-  loading.hidden = false;
-
-  const response = await getCards();
- 
-    if (response.ok) {
-      const data = await response.text()
-        let allCardsData = data.split('\n');
-        let columns = allCardsData[0].split('\t');
-
-        for (let i = 1; i < allCardsData.length; i++) {
-            let cardData = allCardsData[i].split('\t');
-
-            let card = {};
-
-            if (cardData[0]) {
-                for (let columnIndex = 0; columnIndex < columns.length; columnIndex++) {
-                    card[columns[columnIndex].trim()] = cardData[columnIndex].trim();
-                }
-
-                card.category = card.category.split('-').map(category => category.trim());
-               
-                if(!card.category.includes('F') && !card.category.includes('RA')) {
-                  card.price = parseFloat(card.price);
-                  if(card['Custo']) {
-                    card['Custo'] = parseInt(card['Custo']);
-                  } else {
-                    card['Custo'] = 24;
-                  }
-                  card['id'] = cards.length + 1;
-
-                  cards.push(card);
-                }
-            }
-        }
-    }
-  localStorage.setItem('cards', JSON.stringify(cards));
-  localStorage.setItem('lastModified', new Date());
-  localStorage.removeItem('cart');
-  loading.hidden = true;
-
-  return cards;
-}
-
-let lastSlice = 0;
 let changedColors = false;
 let changedCMC = false;
 let changedRarity = false;
@@ -354,6 +170,8 @@ const resetFilter = () => {
 
 }
 
+let lastSearch = '';
+
 const setFilters = async (setInHtml = false) => {
   const cardsContainer = document.getElementById('cards-filter-row');
   let cards = JSON.parse(localStorage.getItem('cards'));
@@ -404,11 +222,23 @@ const setFilters = async (setInHtml = false) => {
   }
   cards = orderCards(cards);
 
-  if(setInHtml) {
-    createDomCards(cards);
+
+  const search = document.getElementById('search')?.value;
+  if(search) {
+    if(search !== lastSearch) {
+      cardsContainer.innerHTML = '';
+      lastSearch = search;
+      lastSlice = 0;
+    }
+
+    cards = cards.filter(card => card.name.toLowerCase().includes(search.toLowerCase()));
   }
 
   if(cards.length <= 0) notFoundText.hidden = false;
+
+  if(setInHtml) {
+    createDomCards(cards);
+  }
 
   return cards;
 }
@@ -661,14 +491,6 @@ const getColorsReference = (colors) => {
 }
 
 
-window.onscroll = async function() {
-  const cardsContainer = document.getElementById('cards-filter-row');
-
-  if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 200 && cardsContainer.innerHTML) {
-    createDomCards(await setFilters(false), 'cards-filter-row');
-  }
-  scrollFunction();
-};
 
 const checkIfHasSelected = (array, key = '') => {
 
@@ -683,85 +505,13 @@ const checkIfHasSelected = (array, key = '') => {
   return hasChecked;
 }
 
-
-
-const createDomCards = (cards, container = 'cards-filter-row', noPaginate = false) => {
-
-  const cardsContainer = document.getElementById(container);
-
-  const search = document.getElementById('search')?.value;
-  if(search) {
-    cardsContainer.innerHTML = '';
-    const filterSearch = cards.filter(card => card.name.toLowerCase().includes(search.toLowerCase()));
-    filterSearch.forEach(card => {
-      cardsContainer.innerHTML += getCardTemplate(card);
-    });
-    return;
-  }
-
-  if(noPaginate) {
-    cards.forEach(card => {
-      cardsContainer.innerHTML += getCardTemplate(card);
-    });
-    const loading = document.getElementById('loading');
-    if(loading) loading.hidden = true;
-    return;
-  }
-
-  if(!cardsContainer) return;
-  const cardsToRender = cards.slice(lastSlice, lastSlice + 9);
-  lastSlice += 9;
-
-  cardsToRender.forEach(card => {
-    cardsContainer.innerHTML += getCardTemplate(card);
-  });
-
-  const loading = document.getElementById('loading');
-  if(loading) loading.hidden = true;
-
+if(currentPath.includes('filtrar')) {
+  createFilter();
+  createCMCFilter();
+  createRaritiesFilter();
+  createTypeFilter();
 }
 
-
-(async () => {
-  
-  if(currentPath.includes('filtrar')) {
-    createFilter();
-    createCMCFilter();
-    createRaritiesFilter();
-    createTypeFilter();
-  }
-  const searchBtn = document.getElementById('search-btn');
-  const resetBtn = document.getElementById('reset-btn');
-  const loading = document.getElementById('loading');
-  if(searchBtn && resetBtn) {
-    searchBtn.disabled = true;
-    resetBtn.disabled = true;
-  }
-  
-  if(localStorage.getItem('cards') && localStorage.getItem('lastModified')) {
-    const lastModified = new Date(localStorage.getItem('lastModified'));
-    const lastModifiedPlusHour = new Date(lastModified.getTime() + 30*60000);
-    localStorage.setItem('oneHourFromNow', lastModifiedPlusHour);
-    const now = new Date();
-    if(now >= lastModifiedPlusHour) {
-      await separeteCards();
-    } 
-  } else {
-    await separeteCards();
-  }
-  if(searchBtn && resetBtn) {
-    searchBtn.disabled = false;
-    resetBtn.disabled = false;
-  }
- 
-  loading.hidden = true;
-  if(currentPath.includes('test') || currentPath.includes('index') || !currentPath) {
-    createDomCards(getRACards(), 'cardss', true);
-  }
-  
-})();
-
-
-
-
-
+if(currentPath.includes('test') || currentPath.includes('index') || !currentPath) {
+  createDomCards(getRACards(), 'cardss', true);
+}
