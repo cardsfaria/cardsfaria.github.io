@@ -179,7 +179,6 @@ const separeteCards = async (category = null) => {
     }
   localStorage.setItem('cards', JSON.stringify(cards));
   localStorage.setItem('lastModified', new Date());
-  localStorage.removeItem('cart');
   if(loading) {
     loading.hidden = true;
   }
