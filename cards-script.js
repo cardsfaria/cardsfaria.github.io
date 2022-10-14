@@ -101,10 +101,12 @@ const getCardTemplate = (card) =>  `
     </div>
 
     <div class="card-image-wrapper shadow">
-      <div style="cursor: pointer;" class="card-image w-100" onclick="gotoPage('/card?urlCard=${card.id}')">
+      <div style="cursor: pointer;" class="card-image w-100">
+      <a target="_blank" href="/card?urlCard=${card.id}">
         <img
           src="${card?.image ? card?.image : 'http://gatherer.wizards.com/Handlers/Image.ashx?multiverseid=' + card.id + '&type=card'}"
         />
+        </a>
       </div>
       
     </div>
