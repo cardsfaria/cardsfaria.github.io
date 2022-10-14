@@ -8,6 +8,40 @@
   font-style: normal;
 }
 
+.mtg-symbol {
+  display: inline-block;
+  margin: 1px 1px -1px 0;
+  -webkit-border-radius: 500px;
+  border-radius: 500px;
+  -webkit-box-shadow: -1px 1px 0 rgba(0, 0, 0, 0.85);
+  box-shadow: -1px 1px 0 rgba(0, 0, 0, 0.85);
+  text-indent: -999em;
+  overflow: hidden;
+  width: 15px;
+  height: 15px;
+  -webkit-background-size: 100% 100%;
+  background-size: 100% 100%;
+  background-position: top left;
+  -webkit-print-color-adjust: exact;
+  color-adjust: exact;
+}
+
+.mtg-symbol-W {
+  background-image: url("./assets/W.svg");
+}
+.mtg-symbol-U {
+  background-image: url("./assets/U.svg");
+}
+.mtg-symbol-R {
+  background-image: url("./assets/R.svg");
+}
+.mtg-symbol-B {
+  background-image: url("./assets/B.svg");
+}
+.mtg-symbol-G {
+  background-image: url("./assets/G.svg");
+}
+
 * {
   font-family: "Conv_ChelseaMarket-Regular";
 }
@@ -68,4 +102,9 @@
 .card-image img {
   width: 100%;
   height: 100%;
+}
+
+.card-image2 img {
+  width: 80%;
+  height: 80%;
 }

@@ -89,6 +89,10 @@ const getCards = () => {
   return fetch("//magicshowcase.apphb.com/home/proxy?address=https%3A%2F%2Fdocs.google.com%2Fspreadsheets%2Fd%2F1T7MpDLrNndOFKDnzEZvG0tFDsphZx6BW7Qg-o4xmr_o%2Fpub%3Fgid%3D0%26single%3Dtrue%26output%3Dtsv");
 };
 
+const gotoPage = (page) => {
+  window.location.href = page;
+}
+
 const getCardTemplate = (card) =>  `
 <div class="col-md-4 col-sm-6 col-xs-12">
   <div class="card position-relative">
@@ -97,7 +101,7 @@ const getCardTemplate = (card) =>  `
     </div>
 
     <div class="card-image-wrapper shadow">
-      <div class="card-image w-100">
+      <div style="cursor: pointer;" class="card-image w-100" onclick="gotoPage('/card/${card.id}')">
         <img
           src="${card?.image ? card?.image : 'http://gatherer.wizards.com/Handlers/Image.ashx?multiverseid=' + card.id + '&type=card'}"
         />
@@ -136,7 +140,9 @@ const separeteCards = async (category = null) => {
 
   const loading = document.getElementById('loading');
 
-  loading.hidden = false;
+  if(loading) {
+    loading.hidden = false;
+  }
 
   const response = await getCards();
  
@@ -174,7 +180,9 @@ const separeteCards = async (category = null) => {
   localStorage.setItem('cards', JSON.stringify(cards));
   localStorage.setItem('lastModified', new Date());
   localStorage.removeItem('cart');
-  loading.hidden = true;
+  if(loading) {
+    loading.hidden = true;
+  }
 
   return cards;
 }
@@ -250,7 +258,7 @@ window.onscroll = async function() {
     resetBtn.disabled = false;
   }
  
-  loading.hidden = true;
+  if(loading) loading.hidden = true;
   
   
 })();

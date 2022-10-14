@@ -37,8 +37,10 @@ const searchForList = () => {
 
   arrayList.forEach(card => {
     if(!card) return;
-    const name = (removeFirstWord(card)).toLowerCase();
-    const foundCard = cards.find(item => item.name.toLowerCase() === name || card['Nome Portugues'].toLowerCase() === name);
+
+
+    const name = containsNumber(card) ? (removeFirstWord(card)).toLowerCase() : card.toLowerCase();
+    const foundCard = cards.find(item => item.name.toLowerCase() === name || item['Nome Portugues'].toLowerCase() === name);
     if(foundCard) {
       foundCards.push(foundCard);
     } else {
@@ -113,6 +115,10 @@ const addFoundsToCart = () => {
     },
   }).showToast();
 
+}
+
+const containsNumber = (str) => {
+  return /\d/.test(str);
 }
 
 const removeFirstWord = (str) => {

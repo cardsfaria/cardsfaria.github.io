@@ -27,11 +27,14 @@ const menuObject = [
     id: 'list-nav',
     name: 'Por lista',
     path: '/list',
-  },
+  }
 ];
 
 const menu = document.getElementById('menu');
 
 menuObject.forEach(item => menu.innerHTML += menuTemplate(item));
 
-document.getElementById(`${currentPath}-nav`).classList.add('active');
+const currentNav = document.getElementById(`${currentPath}-nav`);
+if(currentNav) {
+  currentNav.classList.add('active');
+}
