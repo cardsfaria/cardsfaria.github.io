@@ -1,4 +1,5 @@
-const urlCard = window.location.href.split('/')[4];
+const urlSearchParams = new URLSearchParams(window.location.search);
+const { urlCard } = Object.fromEntries(urlSearchParams.entries());
 
 if(!urlCard) {
   window.location.href = '/';
