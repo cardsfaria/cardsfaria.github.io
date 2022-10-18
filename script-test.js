@@ -511,6 +511,7 @@ if(currentPath.includes('filtrar')) {
   createCMCFilter();
   createRaritiesFilter();
   createTypeFilter();
+  setFilters(true);
 }
 
 if(currentPath.includes('test') || currentPath.includes('index') || !currentPath) {

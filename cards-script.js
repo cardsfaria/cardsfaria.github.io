@@ -181,6 +181,7 @@ const separeteCards = async (category = null) => {
     }
   localStorage.setItem('cards', JSON.stringify(cards));
   localStorage.setItem('lastModified', new Date());
+  setFilters(true);
   if(loading) {
     loading.hidden = true;
   }
@@ -260,6 +261,5 @@ window.onscroll = async function() {
   }
  
   if(loading) loading.hidden = true;
-  
   
 })();
