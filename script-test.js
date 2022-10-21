@@ -5,20 +5,24 @@ notFoundText.hidden = true;
 const showFilterButton = document.getElementById('show-filter-button');
 const filters = document.getElementById('filters');
 
+let isFilterOpen = false;
+
 const showFilter = () => {
+  isFilterOpen = true;
   toggleButtonText();
   showFilterButton.onclick = hideFilter;
   filters.style.display = 'block'
 }
 
 const hideFilter = () => {
+  isFilterOpen = false;
   toggleButtonText();
   showFilterButton.onclick = showFilter;
   filters.style.display = 'none'; 
 }
  
 const toggleButtonText = () => {
-  const text = showFilterButton.innerText === "Mostrar filtros" ? "Esconder filtros" : "Mostrar filtros";
+  const text = isFilterOpen ? "Esconder filtros" : "Mostrar filtros";
   showFilterButton.innerText = text;
 }
 
