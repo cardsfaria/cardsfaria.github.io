@@ -85,6 +85,7 @@ if(mybutton) {
 
 
 const getCards = () => {
+  return fetch('http://164.92.121.221/api/fetchCards');
 
   return fetch("//magicshowcase.apphb.com/home/proxy?address=https%3A%2F%2Fdocs.google.com%2Fspreadsheets%2Fd%2F1T7MpDLrNndOFKDnzEZvG0tFDsphZx6BW7Qg-o4xmr_o%2Fpub%3Fgid%3D0%26single%3Dtrue%26output%3Dtsv");
 };
@@ -149,33 +150,21 @@ const separeteCards = async (category = null) => {
   const response = await getCards();
  
     if (response.ok) {
-      const data = await response.text()
-        let allCardsData = data.split('\n');
-        let columns = allCardsData[0].split('\t');
+      let allCardsData = await response.json();
+  
+        for (let i = 0; i < allCardsData.length; i++) {
+            let card = allCardsData[i];
+            card.category = card.category.split('-').map(category => category.trim());
+            if(!card.category.includes('F') && !card.category.includes('RA')) {
+              card.price = parseFloat(card.price);
+              if(card['Custo']) {
+                card['Custo'] = parseInt(card['Custo']);
+              } else {
+                card['Custo'] = 24;
+              }
+              card['id'] = cards.length + 1;
 
-        for (let i = 1; i < allCardsData.length; i++) {
-            let cardData = allCardsData[i].split('\t');
-
-            let card = {};
-
-            if (cardData[0]) {
-                for (let columnIndex = 0; columnIndex < columns.length; columnIndex++) {
-                    card[columns[columnIndex].trim()] = cardData[columnIndex].trim();
-                }
-
-                card.category = card.category.split('-').map(category => category.trim());
-               
-                if(!card.category.includes('F') && !card.category.includes('RA')) {
-                  card.price = parseFloat(card.price);
-                  if(card['Custo']) {
-                    card['Custo'] = parseInt(card['Custo']);
-                  } else {
-                    card['Custo'] = 24;
-                  }
-                  card['id'] = cards.length + 1;
-
-                  cards.push(card);
-                }
+              cards.push(card);
             }
         }
     }
@@ -185,6 +174,7 @@ const separeteCards = async (category = null) => {
   if(loading) {
     loading.hidden = true;
   }
+  window.location.reload();
 
   return cards;
 }
@@ -218,8 +208,6 @@ const createDomCards = (cards, container = 'cards-filter-row', noPaginate = fals
 
 window.onscroll = async function() {
 
- 
-
   const cardsContainer = document.getElementById('cards-filter-row');
   
   if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 200 && cardsContainer.innerHTML) {
@@ -246,8 +234,8 @@ window.onscroll = async function() {
   
   if(localStorage.getItem('cards') && localStorage.getItem('lastModified')) {
     const lastModified = new Date(localStorage.getItem('lastModified'));
-    const lastModifiedPlusHour = new Date(lastModified.getTime() + 30*60000);
-    localStorage.setItem('oneHourFromNow', lastModifiedPlusHour);
+    const addMinutes = 15;
+    const lastModifiedPlusHour = new Date(lastModified.getTime() + addMinutes * 60000);
     const now = new Date();
     if(now >= lastModifiedPlusHour) {
       await separeteCards();
