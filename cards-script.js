@@ -85,7 +85,7 @@ if(mybutton) {
 
 
 const getCards = () => {
-  return fetch('http://164.92.121.221/api/fetchCards');
+  return fetch('https://cardsfariaapi.tk/api/fetchCards');
 
   return fetch("//magicshowcase.apphb.com/home/proxy?address=https%3A%2F%2Fdocs.google.com%2Fspreadsheets%2Fd%2F1T7MpDLrNndOFKDnzEZvG0tFDsphZx6BW7Qg-o4xmr_o%2Fpub%3Fgid%3D0%26single%3Dtrue%26output%3Dtsv");
 };
