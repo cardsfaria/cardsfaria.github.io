@@ -1,40 +1,44 @@
-const currentPath = window.location.href.split('/')[3];
+const currentPath = window.location.href.split("/")[3];
 
-
-const menuTemplate = ({id, name, path}) => `
+const menuTemplate = ({ id, name, path }) => `
 <li class="nav-item">
-  <a id="${id}" class="nav-link" href="${path}" aria-current="page">${name}</a>
+  <a id="${id}" class="nav-link font-lg" href="${path}" style="font-size: 20px" aria-current="page">${name}</a>
 </li>
-`
+`;
 
 const menuObject = [
   {
-    id: '-nav',
-    name: 'Home',
-    path: '/',
+    id: "-nav",
+    name: "Home",
+    path: "/"
   },
   {
-    id: 'filtrar-nav',
-    name: 'Filtrar',
-    path: '/filtrar',
+    id: "filtrar-nav2",
+    name: "Todo o estoque",
+    path: "/filtrar"
   },
   {
-    id: 'cart-nav',
-    name: 'Carrinho',
-    path: '/cart',
+    id: "filtrar-nav",
+    name: "Filtrar",
+    path: "/filtrar"
   },
   {
-    id: 'list-nav',
-    name: 'Por lista',
-    path: '/list',
+    id: "cart-nav",
+    name: "Carrinho",
+    path: "/cart"
+  },
+  {
+    id: "list-nav",
+    name: "Por lista",
+    path: "/list"
   }
 ];
 
-const menu = document.getElementById('menu');
+const menu = document.getElementById("menu");
 
-menuObject.forEach(item => menu.innerHTML += menuTemplate(item));
+menuObject.forEach((item) => (menu.innerHTML += menuTemplate(item)));
 
 const currentNav = document.getElementById(`${currentPath}-nav`);
-if(currentNav) {
-  currentNav.classList.add('active');
+if (currentNav) {
+  currentNav.classList.add("active");
 }
