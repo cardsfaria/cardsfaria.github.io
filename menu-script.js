@@ -1,7 +1,7 @@
 const currentPath = window.location.href.split("/")[3];
 
 const menuTemplate = ({ id, name, path }) => `
-<li class="nav-item">
+<li class="nav-item" style="margin-right: 30px">
   <a id="${id}" class="nav-link font-lg" href="${path}" style="font-size: 20px" aria-current="page">${name}</a>
 </li>
 `;
