@@ -98,7 +98,7 @@ if (mybutton) {
 }
 
 const getCards = () => {
-  return fetch("https://cardsfariaapi.tk/api/fetchCards");
+  return fetch("https://api.cardsfaria.com/api/fetchCards");
 };
 
 const gotoPage = (page) => {
