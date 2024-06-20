@@ -1,9 +1,14 @@
 const tbody = document.getElementById("tbody-cart");
 const table = document.getElementById("table");
 
+// if it is http redirect to https
+if (location.protocol !== "https:") {
+  window.location.href = window.location.href.replace("http://", "https://");
+}
+
 const getCopyText = () => {
   const cart = JSON.parse(localStorage.getItem("cart")) || [];
-  let text = "Oi Faria, eu gostaria de reservar essas cartas: \n\n";
+  let text = "Tudo bem, amigo? Eu gostaria de reservar essas cartas: \n\n";
   let quantityOfCards = 0;
   cart.forEach((item) => {
     quantityOfCards += item.quantitySelected;
