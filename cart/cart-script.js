@@ -8,7 +8,7 @@ if (location.protocol !== "https:") {
 
 const getCopyText = () => {
   const cart = JSON.parse(localStorage.getItem("cart")) || [];
-  let text = "Tudo bem, amigo? Eu gostaria de reservar essas cartas: \n\n";
+  let text = "Olá, tudo bem? Eu gostaria de reservar essas cartas: \n\n";
   let quantityOfCards = 0;
   cart.forEach((item) => {
     quantityOfCards += item.quantitySelected;
