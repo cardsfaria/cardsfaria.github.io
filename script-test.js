@@ -98,10 +98,20 @@ const getFiltersTemplate = (color) =>`
   `
 
   // ===== Filtros das colunas novas (base NOVA) =====
-  const idiomas = [
-    { id: 'EN', name: 'Inglês' },
-    { id: 'PT', name: 'Português' },
-  ];
+  // Idioma é montado dinamicamente a partir dos idiomas que existem na base
+  // (novas línguas aparecem sozinhas, com bandeirinha).
+  let idiomas = [];
+  const IDIOMA_NAMES = {
+    EN: 'Inglês', PT: 'Português', ES: 'Espanhol', SP: 'Espanhol',
+    JP: 'Japonês', JA: 'Japonês', FR: 'Francês', DE: 'Alemão',
+    IT: 'Italiano', RU: 'Russo', KR: 'Coreano', KO: 'Coreano',
+    CN: 'Chinês', ZH: 'Chinês',
+  };
+  const IDIOMA_FLAGS = {
+    EN: '🇺🇸', PT: '🇧🇷', BR: '🇧🇷', ES: '🇪🇸', SP: '🇪🇸',
+    JP: '🇯🇵', JA: '🇯🇵', FR: '🇫🇷', DE: '🇩🇪', IT: '🇮🇹',
+    RU: '🇷🇺', KR: '🇰🇷', KO: '🇰🇷', CN: '🇨🇳', ZH: '🇨🇳',
+  };
 
   const condicoes = [
     { id: 'NM', name: 'NM (Near Mint)' },
@@ -137,6 +147,17 @@ const getFiltersTemplate = (color) =>`
   const createIdiomaFilter = () => {
     const el = document.getElementById('idioma-filters');
     if (!el) return;
+    const cards = JSON.parse(localStorage.getItem('cards')) || [];
+    const codes = [
+      ...new Set(
+        cards.map((c) => (c.idioma || '').toUpperCase().trim()).filter(Boolean)
+      ),
+    ].sort();
+    idiomas = codes.map((code) => ({
+      id: code,
+      name: (IDIOMA_FLAGS[code] ? IDIOMA_FLAGS[code] + ' ' : '') + (IDIOMA_NAMES[code] || code),
+    }));
+    el.innerHTML = '';
     idiomas.forEach((i) => (el.innerHTML += getGenericCheckboxTemplate(i, 'idioma-')));
   };
 
@@ -749,8 +770,8 @@ if(currentPath.includes('recentes')) {
 
   wireLiveFiltering();
 
-  // Desktop: painel aberto por padrão. Mobile: fica como gaveta fechada.
-  setFiltersOpen(window.innerWidth >= 768);
+  // Só abre sozinho no desktop largo. Celular/tablet começam fechados.
+  setFiltersOpen(window.innerWidth >= 992);
 
   liveApply();
 }

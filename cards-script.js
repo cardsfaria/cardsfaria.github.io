@@ -6,9 +6,35 @@ const formatter = new Intl.NumberFormat("pt-BR", {
 
 document.getElementById("menu-button")?.click();
 
-const addToCart = (cardId) => {
-  const button = document.getElementById("cart-" + cardId);
+const cartToast = (text, ok = true) =>
+  Toastify({
+    text,
+    duration: 2000,
+    close: true,
+    gravity: "right",
+    position: "right",
+    stopOnFocus: true,
+    style: {
+      background: ok
+        ? "linear-gradient(to right, #00b09b, #96c93d)"
+        : "linear-gradient(to right, #FFD400, #FFDD3C)"
+    }
+  }).showToast();
 
+// Seletor de quantidade no card (só aparece quando há mais de 1 disponível).
+const changeQty = (cardId, delta) => {
+  const cards = JSON.parse(localStorage.getItem("cards")) || [];
+  const card = cards.find((c) => c.id == cardId);
+  const max = parseInt(card?.qty) || 1;
+  const el = document.getElementById("qtysel-" + cardId);
+  if (!el) return;
+  let v = parseInt(el.textContent) || 1;
+  v = Math.min(max, Math.max(1, v + delta));
+  el.textContent = v;
+};
+
+const addToCart = (cardId) => {
+  // Reset do carrinho após 7 dias sem adicionar (mantido).
   const lastAddedDate = localStorage.getItem("lastAddedDate")
     ? new Date(localStorage.getItem("lastAddedDate"))
     : null;
@@ -16,64 +42,52 @@ const addToCart = (cardId) => {
   if (!lastAddedDate) {
     localStorage.setItem("lastAddedDate", new Date());
   } else {
-    let Difference_In_Time = new Date().getTime() - lastAddedDate.getTime();
-    let Difference_In_Days = Math.round(
-      Difference_In_Time / (1000 * 3600 * 24)
+    const days = Math.round(
+      (new Date().getTime() - lastAddedDate.getTime()) / (1000 * 3600 * 24)
     );
-    if (Difference_In_Days > 7) {
+    if (days > 7) {
       localStorage.setItem("lastAddedDate", new Date());
       localStorage.setItem("cart", JSON.stringify([]));
     }
   }
 
-  const cards = JSON.parse(localStorage.getItem("cards"));
-  let card = cards.find((c) => c.id == cardId);
-  const cart = JSON.parse(localStorage.getItem("cart")) || [];
+  const cards = JSON.parse(localStorage.getItem("cards")) || [];
+  const card = cards.find((c) => c.id == cardId);
+  if (!card) return;
 
-  card.quantitySelected = 1;
+  const cart = JSON.parse(localStorage.getItem("cart")) || [];
+  const available = parseInt(card.qty) || 1;
+
+  // Quantidade escolhida no seletor (default 1).
+  const sel = document.getElementById("qtysel-" + cardId);
+  const wanted = sel ? parseInt(sel.textContent) || 1 : 1;
 
   const cardInCart = cart.find((c) => c.id == cardId);
-  let text = "Adicionado 1 unidade de " + card.name + " ao carrinho";
+  const already = cardInCart ? cardInCart.quantitySelected : 0;
+  const canAdd = Math.max(0, available - already);
 
-  if (cardInCart) {
-    if (cardInCart.quantitySelected >= parseInt(card.qty)) {
-      Toastify({
-        text: "Quantidade máxima atingida",
-        duration: 2000,
-        close: true,
-        gravity: "right", // `top` or `bottom`
-        position: "right", // `left`, `center` or `right`
-        stopOnFocus: true, // Prevents dismissing of toast on hover
-        style: {
-          background: "linear-gradient(to right, #FFD400, #FFDD3C)"
-        }
-      }).showToast();
-      button.disabled;
-      return;
-    }
-    text = `Alterado a quantidade de ${cardInCart.quantitySelected} para ${
-      cardInCart.quantitySelected + 1
-    } de ${cardInCart.name} no carrinho.`;
-
-    cardInCart.quantitySelected += 1;
-    card = cardInCart;
-    const cardIndex = cart.findIndex((c) => c.id == cardId);
-    cart.splice(cardIndex, 1);
+  if (canAdd <= 0) {
+    cartToast("Você já tem o máximo disponível no carrinho", false);
+    return;
   }
 
-  cart.push(card);
-  Toastify({
-    text,
-    duration: 2000,
-    close: true,
-    gravity: "right", // `top` or `bottom`
-    position: "right", // `left`, `center` or `right`
-    stopOnFocus: true, // Prevents dismissing of toast on hover
-    style: {
-      background: "linear-gradient(to right, #00b09b, #96c93d)"
-    }
-  }).showToast();
+  const toAdd = Math.min(wanted, canAdd);
+
+  if (cardInCart) {
+    cardInCart.quantitySelected += toAdd;
+  } else {
+    card.quantitySelected = toAdd;
+    cart.push(card);
+  }
+
   localStorage.setItem("cart", JSON.stringify(cart));
+  cartToast(
+    `Adicionado ${toAdd} ${toAdd === 1 ? "unidade" : "unidades"} de ${
+      card.name
+    } ao carrinho`
+  );
+
+  if (sel) sel.textContent = 1; // volta o seletor pra 1
 };
 
 let mybutton = document.getElementById("btn-back-to-top");
@@ -112,7 +126,45 @@ const gotoPage = (page) => {
   window.location.href = page;
 };
 
-const getCardTemplate = (card) => `
+const LANG_FLAGS = {
+  PT: "🇧🇷", BR: "🇧🇷", EN: "🇺🇸", ES: "🇪🇸", SP: "🇪🇸",
+  JP: "🇯🇵", JA: "🇯🇵", FR: "🇫🇷", DE: "🇩🇪", IT: "🇮🇹",
+  RU: "🇷🇺", KR: "🇰🇷", KO: "🇰🇷", CN: "🇨🇳", ZH: "🇨🇳"
+};
+
+const getLangBadge = (idioma) => {
+  const code = (idioma || "").toUpperCase().trim();
+  if (!code) return "";
+  const flag = LANG_FLAGS[code];
+  return `<span class="badge-lang" title="Idioma: ${code}">${
+    flag ? flag + " " : ""
+  }${code}</span>`;
+};
+
+const getCondBadge = (condicao) => {
+  const cond = (condicao || "").toUpperCase().trim();
+  if (!cond) return "";
+  let cls = "def";
+  if (cond.includes("NM")) cls = "nm";
+  else if (cond.includes("SP")) cls = "sp";
+  else if (cond.includes("MP")) cls = "mp";
+  else if (cond.includes("HP")) cls = "hp";
+  else if (cond.includes("DM")) cls = "dmg";
+  return `<span class="badge-cond badge-cond--${cls}" title="Condição: ${cond}">${cond}</span>`;
+};
+
+const getCardTemplate = (card) => {
+  const avail = parseInt(card.qty) || 0;
+  const stepper =
+    avail > 1
+      ? `<div class="qty-stepper" role="group" aria-label="Quantidade">
+          <button type="button" class="qty-btn" onclick="changeQty('${card.id}', -1)" aria-label="Diminuir">−</button>
+          <span class="qty-val" id="qtysel-${card.id}">1</span>
+          <button type="button" class="qty-btn" onclick="changeQty('${card.id}', 1)" aria-label="Aumentar">+</button>
+        </div>`
+      : `<span class="qty-single">Última unidade</span>`;
+
+  return `
 <div class="col-6 col-lg-4">
   <div class="card position-relative">
     <div class="card-info">
@@ -121,45 +173,58 @@ const getCardTemplate = (card) => `
 
     <div class="card-image-wrapper shadow">
       <div style="cursor: pointer;" class="card-image w-100">
-      <a target="_blank" href="/card?urlCard=${card.id}">
-        <img
-          src="${
-            card?.image
-              ? card?.image
-              : "http://gatherer.wizards.com/Handlers/Image.ashx?multiverseid=" +
-                card.id +
-                "&type=card"
-          }"
-        />
+        <a target="_blank" href="/card?urlCard=${card.id}">
+          <img
+            src="${
+              card?.image
+                ? card?.image
+                : "http://gatherer.wizards.com/Handlers/Image.ashx?multiverseid=" +
+                  card.id +
+                  "&type=card"
+            }"
+          />
         </a>
       </div>
-      
     </div>
 
     <div class="card-info card-price">
       <span>${formatter.format(card.price || 0)}</span>
     </div>
-    
-    <div class="card-info card-qty">
-      <span>Qtde: ${card.qty}x</span>
-    </div>
-    <div class="card-bottom">
-      <span class="text-danger card-info2">${card.additionalInfo || "-"}</span>
+
+    ${
+      getLangBadge(card.idioma) || getCondBadge(card.condicao)
+        ? `<div class="card-meta">${getLangBadge(card.idioma)}${getCondBadge(
+            card.condicao
+          )}</div>`
+        : ""
+    }
+
+    <div class="card-stock">${avail} ${
+    avail === 1 ? "disponível" : "disponíveis"
+  }</div>
+
+    ${
+      card.additionalInfo
+        ? `<span class="card-info2 text-danger">${card.additionalInfo}</span>`
+        : ""
+    }
+
+    <div class="card-buy">
+      ${stepper}
       <button
         type="button"
         class="btn btn-dark btn-floating"
         id="cart-${card.id}"
         onclick="addToCart('${card.id}')"
+        aria-label="Adicionar ao carrinho"
       >
         <i class="fa-solid fa-cart-shopping"></i>
       </button>
     </div>
-
-    </div>
   </div>
 </div>
-
 `;
+};
 
 const separeteCards = async (category = null) => {
   const cards = [];
