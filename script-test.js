@@ -1,4 +1,14 @@
 
+// Normaliza texto para busca: minúsculo, sem espaços nas pontas e sem
+// acento/cedilha (ex.: "  Condená  " -> "condena"). Usado na busca do estoque.
+const normalizeSearch = (value) =>
+  (value || '')
+    .toString()
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '');
+
 const notFoundText = document.getElementById('not-found-cards');
 notFoundText.hidden = true;
 
@@ -7,23 +17,24 @@ const filters = document.getElementById('filters');
 
 let isFilterOpen = false;
 
-const showFilter = () => {
-  isFilterOpen = true;
+// Abre/fecha o painel. No desktop é um grid que aparece/some; no mobile é uma
+// gaveta (bottom sheet) que desliza com backdrop.
+const setFiltersOpen = (open) => {
+  isFilterOpen = open;
+  if (filters) filters.classList.toggle('is-open', open);
+  const backdrop = document.getElementById('filter-backdrop');
+  if (backdrop) backdrop.classList.toggle('is-open', open);
+  document.body.classList.toggle('filters-locked', open && window.innerWidth < 768);
   toggleButtonText();
-  showFilterButton.onclick = hideFilter;
-  filters.style.display = 'block'
-}
+  if (showFilterButton) showFilterButton.onclick = open ? hideFilter : showFilter;
+};
 
-const hideFilter = () => {
-  isFilterOpen = false;
-  toggleButtonText();
-  showFilterButton.onclick = showFilter;
-  filters.style.display = 'none'; 
-}
- 
+const showFilter = () => setFiltersOpen(true);
+const hideFilter = () => setFiltersOpen(false);
+
 const toggleButtonText = () => {
-  const text = isFilterOpen ? "Esconder filtros" : "Mostrar filtros";
-  showFilterButton.innerText = text;
+  const span = document.getElementById('filter-toggle-text');
+  if (span) span.innerText = isFilterOpen ? 'Esconder' : 'Filtros';
 }
 
 
@@ -36,19 +47,11 @@ const handleChangedCMC = () => changedCMC = true;
 const handleChangedRarity = () => changedRarity = true;
 const handleChangedType = () => changedType = true;
 
-const colors = [{id: 'red', name: 'Vermelho'}, { id: 'blue', name: 'Azul'}, { id: 'black', name: 'Preto'}, { id: 'white', name: 'Branco'}, { id: 'green', name: 'Verde'}, { id: 'colorless', name: 'Colorless'}, { id: 'foil', name: 'Foil'}];
+const colors = [{id: 'red', name: 'Vermelho'}, { id: 'blue', name: 'Azul'}, { id: 'black', name: 'Preto'}, { id: 'white', name: 'Branco'}, { id: 'green', name: 'Verde'}, { id: 'colorless', name: 'Incolor'}];
 
 const getFiltersTemplate = (color) =>`
-  <div class="form-check mt-2">
-    <input
-      class="form-check-input"
-      onchange="handleChangedColors()"
-      type="checkbox"
-      id="${color.id}"
-    />
-
-    <label class="form-check-label" for="${color.id}"> ${color.name} </label>
-  </div>
+  <input class="btn-check" onchange="handleChangedColors()" type="checkbox" id="${color.id}" autocomplete="off" />
+  <label class="btn filter-chip" for="${color.id}"><span class="mana-dot mana-${color.id}"></span>${color.name}</label>
   `
 
   const cmcs = [
@@ -61,62 +64,157 @@ const getFiltersTemplate = (color) =>`
   ]
 
   const getFiltersCMCTemplate = (cmc) =>`
-  <div class="form-check mt-2">
-    <input
-      class="form-check-input"
-      onchange="handleChangedCMC()"
-      type="checkbox"
-      id="cmc-${cmc.id}"
-    />
-
-    <label class="form-check-label" for="cmc-${cmc.id}"> Custo: ${cmc.name} </label>
-  </div>
+  <input class="btn-check" onchange="handleChangedCMC()" type="checkbox" id="cmc-${cmc.id}" autocomplete="off" />
+  <label class="btn filter-chip" for="cmc-${cmc.id}">${cmc.name}</label>
   `
 
   const rarities = [
-    {id: 'C', name: 'Comum'},
-    {id: 'I', name: 'Incomum'},
-    {id: 'R', name: 'Rara'},
-    {id: 'M', name: 'Mitico-Rara'},
-    {id: 'E', name: 'Especial'},
+    {id: 'comum', name: 'Comum'},
+    {id: 'incomum', name: 'Incomum'},
+    {id: 'rara', name: 'Rara'},
+    {id: 'mitica', name: 'Mítica'},
+    {id: 'especial', name: 'Especial'},
   ]
 
   const getFiltersRarityTemplate = (rarity) =>`
-  <div class="form-check mt-2">
-    <input
-      class="form-check-input"
-      onchange="handleChangedRarity()"
-      type="checkbox"
-      id="rare-${rarity.id}"
-    />
-
-    <label class="form-check-label" for="rare-${rarity.id}"> ${rarity.name} </label>
-  </div>
+  <input class="btn-check" onchange="handleChangedRarity()" type="checkbox" id="rare-${rarity.id}" autocomplete="off" />
+  <label class="btn filter-chip" for="rare-${rarity.id}">${rarity.name}</label>
   `
 
   const types = [
-    {id: 'F', name: 'Feitiço'},
-    {id: 'C', name: 'Criatura'},
-    {id: 'I', name: 'Instantanea'},
-    {id: 'A', name: 'Artefato'},
-    {id: 'T', name: 'Tokens'},
-    {id: 'E', name: 'Encantamentos'},
-    {id: 'P', name: 'Planeswalker'},
-    {id: 'L', name: 'Terrenos'},
+    {id: 'criatura', name: 'Criatura'},
+    {id: 'instantanea', name: 'Instantânea'},
+    {id: 'feitico', name: 'Feitiço'},
+    {id: 'encantamento', name: 'Encantamento'},
+    {id: 'artefato', name: 'Artefato'},
+    {id: 'planeswalker', name: 'Planeswalker'},
+    {id: 'terreno', name: 'Terreno'},
+    {id: 'token', name: 'Token'},
   ]
 
   const getFiltersTypesTemplate = (type) =>`
-  <div class="form-check mt-2">
-    <input
-      class="form-check-input"
-      onchange="handleChangedType()"
-      type="checkbox"
-      id="type-${type.id}"
-    />
-
-    <label class="form-check-label" for="type-${type.id}"> ${type.name} </label>
-  </div>
+  <input class="btn-check" onchange="handleChangedType()" type="checkbox" id="type-${type.id}" autocomplete="off" />
+  <label class="btn filter-chip" for="type-${type.id}">${type.name}</label>
   `
+
+  // ===== Filtros das colunas novas (base NOVA) =====
+  const idiomas = [
+    { id: 'EN', name: 'Inglês' },
+    { id: 'PT', name: 'Português' },
+  ];
+
+  const condicoes = [
+    { id: 'NM', name: 'NM (Near Mint)' },
+    { id: 'SP', name: 'SP (Slightly Played)' },
+    { id: 'MP', name: 'MP (Moderately Played)' },
+    { id: 'HP', name: 'HP (Heavily Played)' },
+    { id: 'DMG', name: 'DMG (Damaged)' },
+  ];
+
+  const formatos = [
+    { id: 'S', name: 'Standard' },
+    { id: 'P', name: 'Pioneer' },
+    { id: 'M', name: 'Modern' },
+    { id: 'L', name: 'Legacy' },
+    { id: 'V', name: 'Vintage' },
+    { id: 'C', name: 'Commander' },
+  ];
+
+  const foils = [
+    { id: 'foil', name: 'Foil' },
+    { id: 'promo', name: 'Promo' },
+  ];
+
+  // Filtros de checkbox novos disparam uma limpeza genérica do container.
+  let changedNew = false;
+  const handleChangedNew = () => (changedNew = true);
+
+  const getGenericCheckboxTemplate = (item, prefix) => `
+  <input class="btn-check" onchange="handleChangedNew()" type="checkbox" id="${prefix}${item.id}" autocomplete="off" />
+  <label class="btn filter-chip" for="${prefix}${item.id}">${item.name}</label>
+  `;
+
+  const createIdiomaFilter = () => {
+    const el = document.getElementById('idioma-filters');
+    if (!el) return;
+    idiomas.forEach((i) => (el.innerHTML += getGenericCheckboxTemplate(i, 'idioma-')));
+  };
+
+  const createCondicaoFilter = () => {
+    const el = document.getElementById('condicao-filters');
+    if (!el) return;
+    condicoes.forEach((c) => (el.innerHTML += getGenericCheckboxTemplate(c, 'cond-')));
+  };
+
+  const createFormatoFilter = () => {
+    const el = document.getElementById('formato-filters');
+    if (!el) return;
+    formatos.forEach((f) => (el.innerHTML += getGenericCheckboxTemplate(f, 'fmt-')));
+  };
+
+  const createFoilFilter = () => {
+    const el = document.getElementById('foil-filters');
+    if (!el) return;
+    foils.forEach((f) => (el.innerHTML += getGenericCheckboxTemplate(f, 'foil-')));
+  };
+
+  // Coleção, Subtipo e Artista têm muitos valores -> viram combobox com busca.
+  let tomColecao = null;
+  let tomSubtipo = null;
+  let tomArtista = null;
+
+  // Combobox multi-seleção com busca (Tom Select). Cai de pé se a lib não carregar.
+  const initTomSelect = (selectId, placeholder) => {
+    const el = document.getElementById(selectId);
+    if (!el || typeof TomSelect === 'undefined') return null;
+    return new TomSelect(el, {
+      plugins: ['remove_button'],
+      maxItems: null,
+      placeholder,
+      hideSelected: true,
+      closeAfterSelect: false,
+    });
+  };
+
+  const populateSelect = (selectId, values) => {
+    const select = document.getElementById(selectId);
+    if (!select) return;
+    values
+      .filter((v) => v && v !== '-')
+      .sort((a, b) => a.localeCompare(b))
+      .forEach((v) => {
+        const opt = document.createElement('option');
+        opt.value = v;
+        opt.textContent = v;
+        select.appendChild(opt);
+      });
+  };
+
+  const createColecaoFilter = () => {
+    const cards = JSON.parse(localStorage.getItem('cards')) || [];
+    const distinct = [...new Set(cards.map((c) => c.colecao))];
+    populateSelect('colecao-select', distinct);
+    tomColecao = initTomSelect('colecao-select', 'Todas as coleções…');
+  };
+
+  const createSubtipoFilter = () => {
+    const cards = JSON.parse(localStorage.getItem('cards')) || [];
+    // Subtipo pode ser composto ("Cobra-Ninja-Ladino") -> lista os subtipos individuais.
+    const distinct = [
+      ...new Set(
+        cards.flatMap((c) => (c.subtipo || '').split('-').map((s) => s.trim()))
+      ),
+    ];
+    populateSelect('subtipo-select', distinct);
+    tomSubtipo = initTomSelect('subtipo-select', 'Todos os subtipos…');
+  };
+
+  const createArtistaFilter = () => {
+    const cards = JSON.parse(localStorage.getItem('cards')) || [];
+    const distinct = [...new Set(cards.map((c) => c.artista))];
+    populateSelect('artista-select', distinct);
+    tomArtista = initTomSelect('artista-select', 'Todos os artistas…');
+  };
 
 const createFilter = () => {
   const colorFilters = document.getElementById('color-filters');
@@ -158,7 +256,15 @@ const resetFilter = () => {
   resetItem(cmcs, 'cmc-');
   resetItem(types, 'type-');
   resetItem(rarities, 'rare-');
-  
+  resetItem(idiomas, 'idioma-');
+  resetItem(condicoes, 'cond-');
+  resetItem(formatos, 'fmt-');
+  resetItem(foils, 'foil-');
+
+  if (tomColecao) tomColecao.clear();
+  if (tomSubtipo) tomSubtipo.clear();
+  if (tomArtista) tomArtista.clear();
+
   localStorage.removeItem('colors');
 
   lastSlice = 0;
@@ -166,18 +272,20 @@ const resetFilter = () => {
   changedCMC = false;
   changedRarity = false;
   changedType = false;
-  const cardsContainer = document.getElementById('cards-filter-row');
-  cardsContainer.innerHTML = '';
+  changedNew = false;
   notFoundText.hidden = true;
 
- document.getElementById('search').value = null;
+  const searchInput = document.getElementById('search');
+  if (searchInput) searchInput.value = '';
+  lastSearch = '';
 
+  if (typeof liveApply === 'function') liveApply();
 }
 
 let lastSearch = '';
 
 const setFilters = async (setInHtml = false) => {
-  hideFilter();
+  // Não esconde mais o painel aqui: a filtragem é ao vivo e o painel fica aberto.
   const cardsContainer = document.getElementById('cards-filter-row');
   let cards = JSON.parse(localStorage.getItem('cards'));
 
@@ -212,6 +320,12 @@ const setFilters = async (setInHtml = false) => {
     lastSlice = 0;
   }
 
+  if(changedNew) {
+    cardsContainer.innerHTML = '';
+    changedNew = false;
+    lastSlice = 0;
+  }
+
   if(checkIfHasSelected(colors, '')) {
     cards = cardsFilterRow(cards);
 
@@ -225,10 +339,25 @@ const setFilters = async (setInHtml = false) => {
   if(checkIfHasSelected(types, 'type-')) {
     cards = typesFilterRow(cards);
   }
+  if(checkIfHasSelected(idiomas, 'idioma-')) {
+    cards = idiomaFilterRow(cards);
+  }
+  if(checkIfHasSelected(condicoes, 'cond-')) {
+    cards = condicaoFilterRow(cards);
+  }
+  if(checkIfHasSelected(formatos, 'fmt-')) {
+    cards = formatoFilterRow(cards);
+  }
+  if(checkIfHasSelected(foils, 'foil-')) {
+    cards = foilFilterRow(cards);
+  }
+  cards = colecaoFilterRow(cards);
+  cards = subtipoFilterRow(cards);
+  cards = artistaFilterRow(cards);
   cards = orderCards(cards);
 
 
-  const search = document.getElementById('search')?.value;
+  const search = normalizeSearch(document.getElementById('search')?.value);
   if(search) {
     if(search !== lastSearch) {
       cardsContainer.innerHTML = '';
@@ -236,7 +365,10 @@ const setFilters = async (setInHtml = false) => {
       lastSlice = 0;
     }
 
-    cards = cards.filter(card => card.name.toLowerCase().includes(search.toLowerCase()) || card['Nome Portugues'].toLowerCase().includes(search.toLowerCase()));
+    cards = cards.filter(card =>
+      normalizeSearch(card.name).includes(search) ||
+      normalizeSearch(card['Nome Portugues']).includes(search)
+    );
   }
 
   if(cards.length <= 0) notFoundText.hidden = false;
@@ -249,39 +381,21 @@ const setFilters = async (setInHtml = false) => {
 }
 
 const cardsFilterRow = (cards) => {
-  
-  const red = document.getElementById('red').checked;
-  const blue = document.getElementById('blue').checked;
-  const black = document.getElementById('black').checked;
-  const white = document.getElementById('white').checked;
-  const green = document.getElementById('green').checked;
-  const foil = document.getElementById('foil').checked;
-  const colorless = document.getElementById('colorless').checked;
- 
-  const colors = {
-    red,
-    blue,
-    black,
-    white,
-    green,
-    colorless
-  }
+  const selected = {
+    red: document.getElementById('red')?.checked,
+    blue: document.getElementById('blue')?.checked,
+    black: document.getElementById('black')?.checked,
+    white: document.getElementById('white')?.checked,
+    green: document.getElementById('green')?.checked,
+    colorless: document.getElementById('colorless')?.checked,
+  };
 
-  const colorsReference = getColorsReference(colors);
-  if(!foil && colorsReference.length <= 0) {
+  const colorsReference = getColorsReference(selected);
+  if (colorsReference.length <= 0) {
     return cards;
   }
 
-  
-  return cards.filter(card => {
-    if(foil && colorsReference.length <= 0) {
-      return Boolean(card['FOIL?']);
-    } else if(foil && colorsReference.length > 0) {
-      return Boolean(card['FOIL?']) && getCardsWithSameColors(colorsReference, card)
-    }
-    return getCardsWithSameColors(colorsReference, card);
-  });
-  
+  return cards.filter((card) => getCardsWithSameColors(colorsReference, card));
 }
 
 const getCardsWithSameColors = (colors, card) => {
@@ -345,91 +459,93 @@ const cmcFilterRow = (cards) => {
   
 }
 
+// Raridade agora vem por extenso (Rara, Especial...). Match sem acento.
 const rarityFilterRow = (cards) => {
-  
-  const comum = document.getElementById('rare-C').checked;
-  const incomum = document.getElementById('rare-I').checked;
-  const rara = document.getElementById('rare-R').checked;
-  const miticorara = document.getElementById('rare-M').checked;
-  const especial = document.getElementById('rare-E').checked;
-  
-  const raritiesCheck = {
-    comum,
-    incomum,
-    rara,
-    miticorara,
-    especial
-  }
-
-  if(Object.values(raritiesCheck).every(type => !type)) {
-    return cards;
-  }
-
-  const raritiesFilter = {
-    'comum': (card) => card['Raridade'] === 'C',
-    'incomum': (card) => card['Raridade'] === 'I',
-    'rara': (card) => card['Raridade'] === 'R',
-    'miticorara': (card) => card['Raridade'] === 'M',
-    'especial': (card) => card['Raridade'] === 'E',
-  }
-
-
-  return cards.filter(card => {
-    for (const [key, value] of Object.entries(raritiesCheck)) {
-      if(value && raritiesFilter[key](card)) {
-        return card;
-      }
-    }
-  });
-  
+  const selected = rarities
+    .filter((r) => document.getElementById('rare-' + r.id)?.checked)
+    .map((r) => normalizeSearch(r.name));
+  if (selected.length <= 0) return cards;
+  return cards.filter((card) => selected.includes(normalizeSearch(card.Raridade)));
 }
 
+// Tipo vem por extenso e pode ser composto ("Lendário-Artefato"). Match por token.
 const typesFilterRow = (cards) => {
-  
-  const feitico = document.getElementById('type-F').checked;
-  const criatura = document.getElementById('type-C').checked;
-  const instantanea = document.getElementById('type-I').checked;
-  const artefato = document.getElementById('type-A').checked;
-  const tokens = document.getElementById('type-T').checked;
-  const encantamentos = document.getElementById('type-E').checked;
-  const planeswalker = document.getElementById('type-P').checked;
-  const lands = document.getElementById('type-L').checked;
-  
-  const typesCheck = {
-    feitico,
-    criatura,
-    instantanea,
-    artefato,
-    tokens,
-    encantamentos,
-    planeswalker,
-    lands
-  }
-
-  if(Object.values(typesCheck).every(type => !type)) {
-    return cards;
-  }
-
-  const typesFilter = {
-    feitico: (card) => card['Tipo'] === 'F',
-    criatura: (card) => card['Tipo'] === 'C',
-    instantanea: (card) => card['Tipo'] === 'I',
-    artefato: (card) => card['Tipo'] === 'A',
-    tokens: (card) => card['Tipo'] === 'T',
-    lands: (card) => card['Tipo'] === 'L',
-    encantamentos: (card) => card['Tipo'] === 'E',
-    planeswalker: (card) => card['Tipo'] === 'P'
-  }
-
-  return cards.filter(card => {
-    for (const [key, value] of Object.entries(typesCheck)) {
-      if(value && typesFilter[key](card)) {
-        return card;
-      }
-    }
+  const selected = types
+    .filter((t) => document.getElementById('type-' + t.id)?.checked)
+    .map((t) => normalizeSearch(t.name));
+  if (selected.length <= 0) return cards;
+  return cards.filter((card) => {
+    const tokens = (card.Tipo || '').split('-').map((t) => normalizeSearch(t));
+    return selected.some((s) => tokens.includes(s));
   });
-  
 }
+
+// Foil / Promo (coluna Foil-Promo).
+const foilFilterRow = (cards) => {
+  const selected = foils
+    .filter((f) => document.getElementById('foil-' + f.id)?.checked)
+    .map((f) => f.id);
+  if (selected.length <= 0) return cards;
+  return cards.filter((card) => {
+    const v = (card['FOIL?'] || '').toLowerCase();
+    return selected.some((s) => v.includes(s));
+  });
+}
+
+const artistaFilterRow = (cards) => {
+  const values = getSelectValues('artista-select');
+  if (values.length <= 0) return cards;
+  return cards.filter((card) => values.includes(card.artista));
+}
+
+// ===== Lógica dos filtros novos (base NOVA) =====
+const getCheckedIds = (array, prefix) =>
+  array
+    .filter((item) => document.getElementById(prefix + item.id)?.checked)
+    .map((item) => item.id);
+
+const idiomaFilterRow = (cards) => {
+  const selected = getCheckedIds(idiomas, 'idioma-');
+  if (selected.length <= 0) return cards;
+  return cards.filter((card) => selected.includes((card.idioma || '').toUpperCase()));
+};
+
+const condicaoFilterRow = (cards) => {
+  const selected = getCheckedIds(condicoes, 'cond-');
+  if (selected.length <= 0) return cards;
+  return cards.filter((card) => selected.includes((card.condicao || '').toUpperCase()));
+};
+
+const formatoFilterRow = (cards) => {
+  const selected = getCheckedIds(formatos, 'fmt-');
+  if (selected.length <= 0) return cards;
+  return cards.filter((card) => {
+    const cardFormats = (card.formato || '').split('-');
+    return selected.some((letter) => cardFormats.includes(letter));
+  });
+};
+
+// Valores selecionados de um <select multiple> (Tom Select mantém o select em sincronia).
+const getSelectValues = (id) => {
+  const el = document.getElementById(id);
+  if (!el) return [];
+  return [...el.selectedOptions].map((o) => o.value).filter(Boolean);
+};
+
+const colecaoFilterRow = (cards) => {
+  const values = getSelectValues('colecao-select');
+  if (values.length <= 0) return cards;
+  return cards.filter((card) => values.includes(card.colecao));
+};
+
+const subtipoFilterRow = (cards) => {
+  const values = getSelectValues('subtipo-select');
+  if (values.length <= 0) return cards;
+  return cards.filter((card) => {
+    const parts = (card.subtipo || '').split('-').map((s) => s.trim());
+    return values.some((v) => parts.includes(v));
+  });
+};
 
 let changedOrder = false;
 const handleChangedOrder = () => changedOrder = true;
@@ -463,15 +579,17 @@ const setOrder = (order, field, cards) => {
   return cards.sort((a, b) => a[field] - b[field]);
 }
 
-const getRACards = () => {
-  const cards = JSON.parse(localStorage.getItem('cards'));
-  let ra = cards.filter(card => card['RAD'] === 'RA');
-  //ra = [];
-  if(ra.length > 0) return ra;
-
-  document.getElementById('not-found-cards-href').style.display = 'block';
-
-
+// Home "Adicionadas Recentemente": a base NOVA não tem mais a coluna RAD/RA,
+// então mostramos as últimas N cartas da aba (as adicionadas por último).
+const RECENT_COUNT = 20;
+const getRecentCards = () => {
+  const cards = JSON.parse(localStorage.getItem('cards')) || [];
+  if (cards.length <= 0) {
+    const href = document.getElementById('not-found-cards-href');
+    if (href) href.style.display = 'block';
+    return [];
+  }
+  return cards.slice(-RECENT_COUNT).reverse();
 }
 
 const getColorsReference = (colors) => {
@@ -510,14 +628,129 @@ const checkIfHasSelected = (array, key = '') => {
   return hasChecked;
 }
 
-if(currentPath.includes('filtrar')) {
+// ---- UX ao vivo: contador de resultados, filtros ativos e auto-aplicar ----
+const updateResultCount = (n) => {
+  const label = `${n === 1 ? 'carta' : 'cartas'}`;
+  const el = document.getElementById('result-count');
+  if (el) el.innerHTML = `<b>${n}</b> ${label}`;
+  const apply = document.getElementById('apply-count');
+  if (apply) apply.textContent = `${n} ${label}`;
+};
+
+const deselectValue = (id, val) => {
+  const ts =
+    id === 'colecao-select' ? tomColecao :
+    id === 'subtipo-select' ? tomSubtipo :
+    id === 'artista-select' ? tomArtista : null;
+  if (ts) {
+    ts.removeItem(val);
+    return;
+  }
+  const el = document.getElementById(id);
+  if (el) [...el.options].forEach((o) => { if (o.value === val) o.selected = false; });
+};
+
+const renderActiveFilters = () => {
+  const box = document.getElementById('active-filters');
+  if (!box) return;
+
+  const tags = [];
+  const pushChecked = (arr, prefix, labelFn) =>
+    arr.forEach((i) => {
+      const el = document.getElementById(prefix + i.id);
+      if (el && el.checked) tags.push({ label: labelFn(i), clear: () => (el.checked = false) });
+    });
+
+  pushChecked(colors, '', (c) => c.name);
+  pushChecked(cmcs, 'cmc-', (c) => 'Custo ' + c.name);
+  pushChecked(rarities, 'rare-', (r) => r.name);
+  pushChecked(types, 'type-', (t) => t.name);
+  pushChecked(idiomas, 'idioma-', (i) => i.name);
+  pushChecked(condicoes, 'cond-', (c) => c.name);
+  pushChecked(formatos, 'fmt-', (f) => f.name);
+  pushChecked(foils, 'foil-', (f) => f.name);
+  getSelectValues('colecao-select').forEach((v) =>
+    tags.push({ label: v, clear: () => deselectValue('colecao-select', v) })
+  );
+  getSelectValues('subtipo-select').forEach((v) =>
+    tags.push({ label: v, clear: () => deselectValue('subtipo-select', v) })
+  );
+  getSelectValues('artista-select').forEach((v) =>
+    tags.push({ label: v, clear: () => deselectValue('artista-select', v) })
+  );
+
+  box.innerHTML = '';
+  if (tags.length <= 0) {
+    box.style.display = 'none';
+    return;
+  }
+  box.style.display = 'flex';
+  tags.forEach((t) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'active-tag';
+    btn.innerHTML = `${t.label} <i class="fa-solid fa-xmark"></i>`;
+    btn.addEventListener('click', () => {
+      t.clear();
+      liveApply();
+    });
+    box.appendChild(btn);
+  });
+};
+
+// Coalesce vários eventos de mudança num único re-render.
+let liveApplyPending = false;
+const liveApply = () => {
+  if (liveApplyPending) return;
+  liveApplyPending = true;
+  setTimeout(() => {
+    liveApplyPending = false;
+    const container = document.getElementById('cards-filter-row');
+    if (container) container.innerHTML = '';
+    lastSlice = 0;
+    Promise.resolve(setFilters(true)).then((cards) => {
+      updateResultCount((cards || []).length);
+      renderActiveFilters();
+    });
+  }, 0);
+};
+
+const wireLiveFiltering = () => {
+  const filtersEl = document.getElementById('filters');
+  if (filtersEl) filtersEl.addEventListener('change', liveApply);
+  const orderEl = document.getElementById('order-select');
+  if (orderEl) orderEl.addEventListener('change', liveApply);
+  const searchEl = document.getElementById('search');
+  if (searchEl) {
+    let deb;
+    searchEl.addEventListener('input', () => {
+      clearTimeout(deb);
+      deb = setTimeout(liveApply, 250);
+    });
+  }
+};
+
+if(currentPath.includes('recentes')) {
+  // Página "Adicionadas Recentemente".
+  createDomCards(getRecentCards(), 'cardss', true);
+} else if(currentPath.includes('filtrar') || currentPath.includes('index') || !currentPath) {
+  // Home (/) e /filtrar são a página de filtros/estoque.
   createFilter();
   createCMCFilter();
   createRaritiesFilter();
   createTypeFilter();
-  setFilters(true);
-}
+  createIdiomaFilter();
+  createCondicaoFilter();
+  createFormatoFilter();
+  createFoilFilter();
+  createColecaoFilter();
+  createSubtipoFilter();
+  createArtistaFilter();
 
-if(currentPath.includes('test') || currentPath.includes('index') || !currentPath) {
-  createDomCards(getRACards(), 'cardss', true);
+  wireLiveFiltering();
+
+  // Desktop: painel aberto por padrão. Mobile: fica como gaveta fechada.
+  setFiltersOpen(window.innerWidth >= 768);
+
+  liveApply();
 }

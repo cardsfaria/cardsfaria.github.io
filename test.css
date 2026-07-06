@@ -88,6 +88,26 @@
   font-size: 20px;
 }
 
+/* Linha inferior do card: info extra à esquerda + carrinho à direita, na mesma
+   linha flex — assim o botão nunca fica por cima do texto (ex.: "Ponta Inferior
+   Direita Amassada"). */
+.card-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 6px;
+}
+.card-bottom .card-info2 {
+  flex: 1 1 auto;
+  min-width: 0;
+  text-align: left;
+  margin: 0;
+}
+.card-bottom button[id^="cart-"] {
+  flex: 0 0 auto;
+}
+
 .card-image-wrapper {
   width: 100%;
   display: inline-block;
@@ -101,10 +121,458 @@
 
 .card-image img {
   width: 100%;
-  height: 100%;
+  height: auto;
+  display: block;
+  /* Proporção de carta de Magic — mantém todas as imagens do mesmo tamanho,
+     evitando o desalinhamento entre os cards na grade (item 9). */
+  aspect-ratio: 63 / 88;
+  object-fit: contain;
 }
 
 .card-image2 img {
   width: 80%;
   height: 80%;
+}
+
+/* Botão de carrinho dentro do card: compacto e proporcional em qualquer tela
+   (antes ficava grande demais, principalmente no celular em paisagem — item 9). */
+button[id^="cart-"] {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  font-size: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+
+/* Título do card com altura fixa (2 linhas) para as imagens SEMPRE alinharem
+   entre os cards da mesma linha, mesmo com nomes de tamanhos diferentes (item 9). */
+.card > .card-info:first-child {
+  line-height: 1.35;
+  height: 2.7em; /* exatamente 2 linhas -> imagens sempre no mesmo Y */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+}
+
+/* Telefone/tablet com cards em 2 colunas (inclui paisagem): carrinho e textos menores. */
+@media (max-width: 991.98px) {
+  button[id^="cart-"] {
+    width: 36px;
+    height: 36px;
+    font-size: 15px;
+  }
+
+  .card-price {
+    font-size: 22px;
+  }
+
+  .card-qty {
+    font-size: 17px;
+  }
+
+  .card-info2 {
+    font-size: 14px;
+  }
+}
+
+/* ============================================================
+   Painel de filtros — "deck builder" escuro com acento âmbar
+   ============================================================ */
+:root {
+  --ff-panel: #1c2027;
+  --ff-panel-2: #232834;
+  --ff-border: rgba(255, 255, 255, 0.08);
+  --ff-border-strong: rgba(255, 255, 255, 0.18);
+  --ff-gold: #e7b64b;
+  --ff-gold-2: #f2c860;
+  --ff-gold-soft: rgba(231, 182, 75, 0.14);
+  --ff-text: #f3f2ee;
+  --ff-dim: rgba(243, 242, 238, 0.55);
+}
+
+.filter-shell {
+  max-width: 1100px;
+  margin: 1.5rem auto 2rem;
+}
+
+/* ---- Toolbar (busca + ordenar + toggle) ---- */
+.filter-toolbar {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.85rem;
+}
+.filter-search {
+  position: relative;
+  flex: 1 1 260px;
+  display: flex;
+  align-items: center;
+}
+.filter-search i {
+  position: absolute;
+  left: 16px;
+  color: var(--ff-dim);
+  font-size: 15px;
+  pointer-events: none;
+}
+.filter-search input {
+  width: 100%;
+  background: var(--ff-panel);
+  border: 1px solid var(--ff-border);
+  color: var(--ff-text);
+  border-radius: 14px;
+  padding: 0.8rem 1rem 0.8rem 2.7rem;
+  font-size: 1rem;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.filter-search input::placeholder { color: var(--ff-dim); }
+.filter-search input:focus {
+  border-color: var(--ff-gold);
+  box-shadow: 0 0 0 3px var(--ff-gold-soft);
+}
+.filter-order {
+  background: var(--ff-panel);
+  border: 1px solid var(--ff-border);
+  color: var(--ff-text);
+  border-radius: 14px;
+  padding: 0.8rem 1rem;
+  outline: none;
+  cursor: pointer;
+  min-width: 150px;
+}
+.filter-order:focus { border-color: var(--ff-gold); box-shadow: 0 0 0 3px var(--ff-gold-soft); }
+.filter-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--ff-panel);
+  border: 1px solid var(--ff-border);
+  color: var(--ff-text);
+  border-radius: 14px;
+  padding: 0.8rem 1.1rem;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+.filter-toggle:hover { border-color: var(--ff-border-strong); background: var(--ff-panel-2); }
+
+/* ---- Painel em grid (visível só quando .is-open) ---- */
+.filter-panel {
+  background: var(--ff-panel);
+  border: 1px solid var(--ff-border);
+  border-radius: 20px;
+  padding: 1.4rem;
+  display: none;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.3rem 1.8rem;
+}
+.filter-panel.is-open { display: grid; }
+@media (min-width: 992px) {
+  .filter-panel { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  min-width: 0;
+}
+.filter-group--wide { grid-column: 1 / -1; }
+.filter-group__label {
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ff-gold);
+  opacity: 0.9;
+}
+.filter-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+/* ---- Chips (toggle) ---- */
+.filter-chip {
+  /* Neutraliza as variáveis do .btn do Bootstrap (senão o hover deixa o fundo transparente). */
+  --bs-btn-bg: var(--ff-panel-2);
+  --bs-btn-color: var(--ff-text);
+  --bs-btn-border-color: var(--ff-border);
+  --bs-btn-hover-bg: var(--ff-panel-2);
+  --bs-btn-hover-color: var(--ff-text);
+  --bs-btn-hover-border-color: var(--ff-border-strong);
+  --bs-btn-active-bg: var(--ff-panel-2);
+  --bs-btn-active-color: var(--ff-text);
+  --bs-btn-active-border-color: var(--ff-border-strong);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  background: var(--ff-panel-2);
+  border: 1px solid var(--ff-border);
+  color: var(--ff-text);
+  border-radius: 999px;
+  padding: 0.42rem 0.9rem;
+  font-size: 0.9rem;
+  line-height: 1.2;
+  cursor: pointer;
+  user-select: none;
+  transition: transform 0.12s ease, background 0.15s, border-color 0.15s, box-shadow 0.15s;
+}
+.filter-chip:hover,
+.filter-chip:focus {
+  background: var(--ff-panel-2);
+  color: var(--ff-text);
+  border-color: var(--ff-border-strong);
+  transform: translateY(-1px);
+}
+.btn-check:checked + .filter-chip,
+.btn-check:checked + .filter-chip:hover,
+.btn-check:checked + .filter-chip:focus {
+  background: linear-gradient(180deg, var(--ff-gold-2), var(--ff-gold));
+  border-color: var(--ff-gold-2);
+  color: #231a05;
+  font-weight: 700;
+  box-shadow: 0 4px 14px -4px rgba(231, 182, 75, 0.6);
+}
+.btn-check:focus-visible + .filter-chip { box-shadow: 0 0 0 3px var(--ff-gold-soft); }
+
+/* Bolinhas de cor de mana */
+.mana-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.3);
+  flex: 0 0 auto;
+}
+.mana-red { background: #d3542f; }
+.mana-blue { background: #2a7fc0; }
+.mana-black { background: #4b4b52; }
+.mana-white { background: #efe9d2; }
+.mana-green { background: #2f9e5f; }
+.mana-colorless { background: #c2c2c2; }
+.mana-foil { background: conic-gradient(from 0deg, #ff66aa, #ffdd66, #66ff99, #66ccff, #cc99ff, #ff66aa); }
+
+/* ---- Footer (contador + limpar) ---- */
+.filter-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-top: 1rem;
+}
+.result-count { color: var(--ff-dim); font-size: 0.95rem; }
+.result-count b { color: var(--ff-gold); font-size: 1.05rem; }
+.btn-clear {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: transparent;
+  border: 1px solid var(--ff-border);
+  color: var(--ff-dim);
+  border-radius: 12px;
+  padding: 0.55rem 0.95rem;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+.btn-clear:hover { color: var(--ff-text); border-color: var(--ff-border-strong); }
+
+/* ---- Filtros ativos ---- */
+.active-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.9rem;
+}
+.active-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--ff-gold-soft);
+  border: 1px solid rgba(231, 182, 75, 0.35);
+  color: var(--ff-gold-2);
+  border-radius: 999px;
+  padding: 0.35rem 0.85rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.active-tag:hover { background: rgba(231, 182, 75, 0.25); }
+.active-tag i { font-size: 0.72rem; opacity: 0.85; }
+
+/* ---- Tom Select (combobox multi + busca) tema escuro ---- */
+.ts-wrapper { min-width: 0; }
+.ts-control {
+  background: var(--ff-panel-2) !important;
+  border: 1px solid var(--ff-border) !important;
+  border-radius: 14px !important;
+  color: var(--ff-text) !important;
+  padding: 0.45rem 0.6rem !important;
+  box-shadow: none !important;
+  min-height: 50px;
+  gap: 0.35rem;
+}
+.ts-wrapper.focus .ts-control {
+  border-color: var(--ff-gold) !important;
+  box-shadow: 0 0 0 3px var(--ff-gold-soft) !important;
+}
+.ts-control > input,
+.ts-control > input::placeholder { color: var(--ff-text) !important; }
+.ts-control > input::placeholder { color: var(--ff-dim) !important; }
+.ts-control .item {
+  background: linear-gradient(180deg, var(--ff-gold-2), var(--ff-gold)) !important;
+  color: #231a05 !important;
+  border-radius: 999px !important;
+  padding: 0.2rem 0.2rem 0.2rem 0.7rem !important;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+}
+.ts-control .item .remove {
+  border: 0 !important;
+  color: #231a05 !important;
+  padding: 0 0.55rem !important;
+  opacity: 0.8;
+}
+.ts-control .item .remove:hover { opacity: 1; background: transparent !important; }
+.ts-dropdown {
+  background: var(--ff-panel-2) !important;
+  border: 1px solid var(--ff-border-strong) !important;
+  color: var(--ff-text) !important;
+  border-radius: 14px !important;
+  overflow: hidden;
+  margin-top: 4px;
+}
+.ts-dropdown .option { padding: 0.55rem 0.85rem !important; }
+.ts-dropdown .active { background: var(--ff-gold-soft) !important; color: var(--ff-gold-2) !important; }
+.ts-dropdown .option:hover { background: rgba(255, 255, 255, 0.06) !important; }
+
+/* ============================================================
+   Mobile: filtros viram gaveta (bottom sheet) + cards 2 por linha
+   ============================================================ */
+
+/* Cabeçalho/rodapé da gaveta e backdrop: escondidos no desktop */
+.filter-drawer-head,
+.filter-drawer-foot { display: none; }
+
+.filter-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  z-index: 1290;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.filter-drawer-close {
+  background: var(--ff-panel-2);
+  border: 1px solid var(--ff-border);
+  color: var(--ff-text);
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-apply {
+  background: linear-gradient(180deg, var(--ff-gold-2), var(--ff-gold));
+  border: none;
+  color: #231a05;
+  font-weight: 700;
+  border-radius: 12px;
+  padding: 0.85rem 1.2rem;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+@media (max-width: 767px) {
+  .filter-shell { margin-top: 1rem; }
+
+  /* Toolbar: busca ocupa a linha, ordenar + filtros dividem a segunda */
+  .filter-search { flex: 1 1 100%; }
+  .filter-order { flex: 1 1 auto; }
+  .filter-toggle { flex: 0 0 auto; }
+
+  /* Painel vira gaveta deslizante de baixo */
+  .filter-panel {
+    display: grid !important;
+    grid-template-columns: 1fr;
+    gap: 1.1rem;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    top: auto;
+    max-height: 88vh;
+    overflow-y: auto;
+    border-radius: 20px 20px 0 0;
+    border-bottom: none;
+    transform: translateY(105%);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 1300;
+    box-shadow: 0 -14px 44px rgba(0, 0, 0, 0.55);
+    padding: 0 1.1rem 1.1rem;
+  }
+  .filter-panel.is-open { transform: translateY(0); }
+
+  .filter-backdrop.is-open { opacity: 1; pointer-events: auto; }
+  body.filters-locked { overflow: hidden; }
+
+  /* cabeçalho fixo da gaveta */
+  .filter-drawer-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 3;
+    background: var(--ff-panel);
+    margin: 0 -1.1rem 0.2rem;
+    padding: 1rem 1.1rem 0.8rem;
+    border-bottom: 1px solid var(--ff-border);
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--ff-text);
+  }
+
+  /* rodapé fixo com limpar + ver resultados */
+  .filter-drawer-foot {
+    display: flex;
+    gap: 0.6rem;
+    position: sticky;
+    bottom: 0;
+    z-index: 3;
+    background: var(--ff-panel);
+    margin: 0.4rem -1.1rem 0;
+    padding: 0.8rem 1.1rem;
+    border-top: 1px solid var(--ff-border);
+  }
+  .filter-drawer-foot .btn-apply { flex: 1; }
+  .filter-drawer-foot .btn-clear { flex: 0 0 auto; }
+
+  /* o rodapé desktop (contador + limpar) some; a gaveta cuida disso */
+  .filter-footer { display: none; }
+
+  /* chips um pouco maiores p/ toque */
+  .filter-chip { padding: 0.5rem 1rem; font-size: 0.95rem; }
+}
+
+/* Cards no celular: 2 por linha, texto compacto */
+@media (max-width: 575.98px) {
+  #cards-filter-row,
+  #cardss { --bs-gutter-x: 0.6rem; }
+  .card { padding: 7px; }
+  .card-info span { font-size: 0.82rem; }
+  .card-price { font-size: 18px; }
+  .card-qty { font-size: 14px; }
+  .card-info2 { font-size: 12px; }
+  button[id^="cart-"] { width: 34px; height: 34px; font-size: 14px; }
 }

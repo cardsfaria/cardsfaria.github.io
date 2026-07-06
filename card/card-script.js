@@ -56,11 +56,19 @@ const cardContainerTemplate = (card) => `
       </div>
       <div class="mt-2" style="font-size: 17px">
         <strong style="opacity: 75%;">Tipo: </strong>
-        <span>${cardTypes[card.Tipo]}</span>
+        <span>${(card.Tipo || '-').replace(/-/g, ' / ')}${card.subtipo && card.subtipo !== '-' ? ' — ' + card.subtipo.replace(/-/g, ' ') : ''}</span>
       </div>
       <div class="mt-2" style="font-size: 17px">
         <strong style="opacity: 75%;">Raridade: </strong>
-        <span>${cardRares[card.Raridade]}</span>
+        <span>${card.Raridade || '-'}</span>
+      </div>
+      <div class="mt-2" style="font-size: 17px">
+        <strong style="opacity: 75%;">Coleção: </strong>
+        <span>${card.colecao || '-'}</span>
+      </div>
+      <div class="mt-2" style="font-size: 17px">
+        <strong style="opacity: 75%;">Artista: </strong>
+        <span>${card.artista || '-'}</span>
       </div>
       <div class="mt-2" style="font-size: 17px">
         <strong style="opacity: 75%;">Informações adicionais: </strong>

@@ -35,15 +35,17 @@ const searchForList = () => {
   const cards = JSON.parse(localStorage.getItem("cards")) || [];
   const arrayList = list.split("\n");
 
-  arrayList.forEach((card) => {
-    if (!card) return;
+  arrayList.forEach((rawLine) => {
+    // Remove espaços antes/depois — comum ao colar de outros sites (item 10).
+    const line = (rawLine || "").trim();
+    if (!line) return;
 
-    const name = containsNumber(card)
-      ? removeFirstWord(card)
+    const name = containsNumber(line)
+      ? removeFirstWord(line)
           .toLowerCase()
           .normalize("NFD")
           .replace(/\p{Diacritic}/gu, "")
-      : card
+      : line
           .toLowerCase()
           .normalize("NFD")
           .replace(/\p{Diacritic}/gu, "");
@@ -62,17 +64,34 @@ const searchForList = () => {
     if (foundCard) {
       foundCards.push(foundCard);
     } else {
-      cardsNotFound.push(card);
+      cardsNotFound.push(line);
     }
   });
 
-  if (cardsNotFound.length > 0) {
-    const modalButton = document.getElementById("modal-button");
-    const modalText = document.getElementById("modal-text");
-    modalText.innerHTML = "";
-    cardsNotFound.forEach(
-      (card) => (modalText.innerHTML += `<li>${card}</li>`)
+  // Popup mostra os ENCONTRADOS + um aviso menor com os faltantes (item 3).
+  const modalButton = document.getElementById("modal-button");
+  const modalText = document.getElementById("modal-text");
+  const modalMissing = document.getElementById("modal-missing");
+
+  modalText.innerHTML = "";
+  if (foundCards.length > 0) {
+    foundCards.forEach(
+      (card) => (modalText.innerHTML += `<li>${card.name}</li>`)
     );
+  } else {
+    modalText.innerHTML = "<li>Nenhuma carta encontrada.</li>";
+  }
+
+  if (modalMissing) {
+    modalMissing.innerHTML = "";
+    if (cardsNotFound.length > 0) {
+      modalMissing.innerHTML =
+        `<hr /><strong>Não encontradas (${cardsNotFound.length}):</strong>` +
+        `<ul>${cardsNotFound.map((c) => `<li>${c}</li>`).join("")}</ul>`;
+    }
+  }
+
+  if (foundCards.length > 0 || cardsNotFound.length > 0) {
     modalButton.click();
   }
 

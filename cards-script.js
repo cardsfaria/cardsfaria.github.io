@@ -97,8 +97,15 @@ if (mybutton) {
   mybutton.addEventListener("click", backToTop);
 }
 
+// Em desenvolvimento (localhost) consome a API local; em produção, a API real.
+const API_BASE =
+  window.location.hostname === "localhost" ||
+  window.location.hostname === "127.0.0.1"
+    ? "http://127.0.0.1:8000"
+    : "https://api.cardsfaria.com";
+
 const getCards = () => {
-  return fetch("https://api.cardsfaria.com/api/fetchCards");
+  return fetch(`${API_BASE}/api/fetchCards`);
 };
 
 const gotoPage = (page) => {
@@ -106,7 +113,7 @@ const gotoPage = (page) => {
 };
 
 const getCardTemplate = (card) => `
-<div class="col-md-4 col-sm-6 col-xs-12">
+<div class="col-6 col-lg-4">
   <div class="card position-relative">
     <div class="card-info">
       <span>${card.name}</span>
@@ -136,19 +143,16 @@ const getCardTemplate = (card) => `
     <div class="card-info card-qty">
       <span>Qtde: ${card.qty}x</span>
     </div>
-    <span class="text-danger text-center card-info2">${
-      card.additionalInfo || "-"
-    }</span>
-    <div class="position-absolute text-danger bottom-0 end-0 me-3 mb-3" style="font-size: 25px;">
-    <button
-      type="button"
-      class="btn btn-dark btn-floating btn-lg"
-      id="cart-${card.id}"
-      onclick="addToCart('${card.id}')"
-    >
-    <i class="fa-solid fa-cart-shopping"></i>
-  </button>
-     
+    <div class="card-bottom">
+      <span class="text-danger card-info2">${card.additionalInfo || "-"}</span>
+      <button
+        type="button"
+        class="btn btn-dark btn-floating"
+        id="cart-${card.id}"
+        onclick="addToCart('${card.id}')"
+      >
+        <i class="fa-solid fa-cart-shopping"></i>
+      </button>
     </div>
 
     </div>
@@ -173,7 +177,7 @@ const separeteCards = async (category = null) => {
 
     for (let i = 0; i < allCardsData.length; i++) {
       let card = allCardsData[i];
-      card.category = card.category
+      card.category = (card.category || "")
         .split("-")
         .map((category) => category.trim());
       if (!card.category.includes("F") && !card.category.includes("RA")) {

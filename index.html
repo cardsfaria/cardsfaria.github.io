@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -24,8 +24,12 @@
       type="text/css"
       href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css"
     />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.min.css"
+    />
   </head>
-  <body class="bg-dark text-light">
+  <body class="bg-dark text-light relative">
     <nav class="navbar navbar-dark navbar-expand-lg bg-dark shadow-lg">
       <div class="container-fluid">
         <a class="navbar-brand" style="margin-right: 30px" href="/"
@@ -48,35 +52,135 @@
         </div>
       </div>
     </nav>
-    <h2 class="text-center mt-5">Adicionadas Recentemente</h2>
-    <h4 id="loading" class="text-center">Carregando...</h4>
-    <h4 id="not-found-cards" class="text-center">Nenhuma carta encontrada.</h4>
-    <a
-      id="not-found-cards-href"
-      class="text-center"
-      href="/filtrar/"
-      style="display: none"
+    <div class="container filter-shell">
+      <div class="filter-toolbar">
+        <div class="filter-search">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input
+            type="text"
+            id="search"
+            placeholder="Buscar carta (nome em PT ou EN)…"
+            autocomplete="off"
+          />
+        </div>
+        <select class="filter-order" id="order-select">
+          <option value="" selected>Ordenar</option>
+          <option value="C-asc">Custo ↑</option>
+          <option value="C-desc">Custo ↓</option>
+          <option value="name-asc">Nome A–Z</option>
+          <option value="name-desc">Nome Z–A</option>
+          <option value="price-asc">Preço ↑</option>
+          <option value="price-desc">Preço ↓</option>
+        </select>
+        <button
+          class="filter-toggle"
+          id="show-filter-button"
+          type="button"
+          onclick="showFilter()"
+        >
+          <i class="fa-solid fa-sliders"></i>
+          <span id="filter-toggle-text">Filtros</span>
+        </button>
+      </div>
+
+      <div id="active-filters" class="active-filters" style="display: none"></div>
+
+      <div id="filter-backdrop" class="filter-backdrop" onclick="hideFilter()"></div>
+
+      <div id="filters" class="filter-panel">
+        <div class="filter-drawer-head">
+          <span>Filtros</span>
+          <button
+            type="button"
+            class="filter-drawer-close"
+            onclick="hideFilter()"
+            aria-label="Fechar filtros"
+          >
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+        <div class="filter-group">
+          <span class="filter-group__label">Cor</span>
+          <div class="filter-chips" id="color-filters"></div>
+        </div>
+        <div class="filter-group">
+          <span class="filter-group__label">Raridade</span>
+          <div class="filter-chips" id="rarity-filters"></div>
+        </div>
+        <div class="filter-group">
+          <span class="filter-group__label">Tipo</span>
+          <div class="filter-chips" id="type-filters"></div>
+        </div>
+        <div class="filter-group">
+          <span class="filter-group__label">Custo</span>
+          <div class="filter-chips" id="cmc-filters"></div>
+        </div>
+        <div class="filter-group">
+          <span class="filter-group__label">Idioma</span>
+          <div class="filter-chips" id="idioma-filters"></div>
+        </div>
+        <div class="filter-group">
+          <span class="filter-group__label">Condição</span>
+          <div class="filter-chips" id="condicao-filters"></div>
+        </div>
+        <div class="filter-group">
+          <span class="filter-group__label">Formato</span>
+          <div class="filter-chips" id="formato-filters"></div>
+        </div>
+        <div class="filter-group">
+          <span class="filter-group__label">Acabamento</span>
+          <div class="filter-chips" id="foil-filters"></div>
+        </div>
+        <div class="filter-group filter-group--wide">
+          <span class="filter-group__label">Coleção</span>
+          <select multiple id="colecao-select" placeholder="Todas as coleções…"></select>
+        </div>
+        <div class="filter-group filter-group--wide">
+          <span class="filter-group__label">Subtipo</span>
+          <select multiple id="subtipo-select" placeholder="Todos os subtipos…"></select>
+        </div>
+        <div class="filter-group filter-group--wide">
+          <span class="filter-group__label">Artista</span>
+          <select multiple id="artista-select" placeholder="Todos os artistas…"></select>
+        </div>
+        <div class="filter-drawer-foot">
+          <button type="button" class="btn-clear" onclick="resetFilter()">
+            <i class="fa-solid fa-arrow-rotate-left"></i> Limpar
+          </button>
+          <button type="button" class="btn-apply" onclick="hideFilter()">
+            Ver <span id="apply-count">resultados</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="filter-footer">
+        <span id="result-count" class="result-count"></span>
+        <button
+          class="btn-clear"
+          id="reset-btn"
+          type="button"
+          onclick="resetFilter()"
+        >
+          <i class="fa-solid fa-arrow-rotate-left"></i> Limpar filtros
+        </button>
+      </div>
+    </div>
+    <button
+      type="button"
+      class="btn btn-dark btn-floating btn-lg"
+      id="btn-back-to-top"
     >
-      Nenhuma carta recente encontrada, clique aqui para ir ao filtro.
-    </a>
+      <i class="fas fa-arrow-up"></i>
+    </button>
+    <h4 id="loading" class="text-center">Carregando...</h4>
+    <h4 id="not-found-cards" class="text-center mt-5">
+      Nenhuma carta encontrada para o filtro.
+    </h4>
+
     <div class="container">
-      <div id="cardss" class="row"></div>
-      <button
-        type="button"
-        class="btn btn-dark btn-floating btn-lg"
-        id="btn-back-to-top"
-      >
-        <i class="fas fa-arrow-up"></i>
-      </button>
+      <div id="cards-filter-row" class="row"></div>
     </div>
-    <div class="d-flex align-items-center justify-content-center m-5">
-      <button
-        class="btn btn-primary btn-lg"
-        onclick="window.location.href = '/filtrar'"
-      >
-        Ver todo o estoque
-      </button>
-    </div>
+
     <script
       type="text/javascript"
       src="https://cdn.jsdelivr.net/npm/toastify-js"
@@ -86,13 +190,9 @@
       integrity="sha384-OERcA2EqjJCMA+/3y+gxIOqMEjwtxJY7qPCqsdltbNJuaOe923+mo//f6V8Qbsw3"
       crossorigin="anonymous"
     ></script>
+    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
     <script src="/menu-script.js"></script>
     <script src="/cards-script.js"></script>
-    <script src="script-test.js"></script>
+    <script src="/script-test.js"></script>
   </body>
-
-  <script>
-    const currentPath2 = window.location.href.split("/")[3];
-    if (currentPath2.includes("pasta")) window.location.href = "/";
-  </script>
 </html>

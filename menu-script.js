@@ -9,18 +9,13 @@ const menuTemplate = ({ id, name, path }) => `
 const menuObject = [
   {
     id: "-nav",
-    name: "Home",
+    name: "Estoque",
     path: "/"
   },
   {
-    id: "filtrar-nav2",
-    name: "Todo o estoque",
-    path: "/filtrar"
-  },
-  {
-    id: "filtrar-nav",
-    name: "Filtrar",
-    path: "/filtrar"
+    id: "recentes-nav",
+    name: "Adicionadas Recentemente",
+    path: "/recentes"
   },
   {
     id: "cart-nav",
