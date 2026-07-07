@@ -117,6 +117,23 @@ const getFiltersTemplate = (color) =>`
   // (Pauper, Premodern, etc. entram sozinhos).
   let formatos = [];
 
+  // Converte token de formato (letra da API antiga OU nome) para o nome por extenso.
+  const FORMATO_MAP = {
+    s: 'Standard', standard: 'Standard',
+    p: 'Pioneer', pioneer: 'Pioneer',
+    m: 'Modern', modern: 'Modern',
+    l: 'Legacy', legacy: 'Legacy',
+    v: 'Vintage', vintage: 'Vintage',
+    c: 'Commander', commander: 'Commander',
+    pa: 'Pauper', pauper: 'Pauper',
+    pre: 'Premodern', premodern: 'Premodern', 't2': 'Standard',
+  };
+  const canonFormato = (token) => {
+    const k = normalizeSearch(token);
+    if (!k) return '';
+    return FORMATO_MAP[k] || token.trim();
+  };
+
   const foils = [
     { id: 'foil', name: 'Foil' },
     { id: 'promo', name: 'Promo' },
@@ -158,9 +175,10 @@ const getFiltersTemplate = (color) =>`
     const el = document.getElementById('formato-filters');
     if (!el) return;
     const cards = JSON.parse(localStorage.getItem('cards')) || [];
+    // converte cada token pro nome por extenso (aceita letra da API antiga)
     const tokens = [
       ...new Set(
-        cards.flatMap((c) => (c.formato || '').split('-').map((t) => t.trim())).filter(Boolean)
+        cards.flatMap((c) => (c.formato || '').split('-').map(canonFormato)).filter(Boolean)
       ),
     ].sort((a, b) => a.localeCompare(b));
     formatos = tokens.map((t) => ({ id: normalizeSearch(t), name: t }));
@@ -510,7 +528,7 @@ const formatoFilterRow = (cards) => {
     .map((f) => normalizeSearch(f.name));
   if (selected.length <= 0) return cards;
   return cards.filter((card) => {
-    const toks = (card.formato || '').split('-').map((t) => normalizeSearch(t));
+    const toks = (card.formato || '').split('-').map((t) => normalizeSearch(canonFormato(t)));
     return selected.some((s) => toks.includes(s));
   });
 };
