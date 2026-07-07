@@ -170,6 +170,7 @@ const getCardTemplate = (card) => {
     <div class="card-info">
       <span>${card.name}</span>
     </div>
+    <div class="card-colecao">${card.colecao || ""}</div>
 
     <div class="card-image-wrapper shadow">
       <div style="cursor: pointer;" class="card-image w-100">
@@ -301,12 +302,17 @@ window.onscroll = async function () {
   const cardsContainer = document.getElementById("cards-filter-row");
 
   if (
+    cardsContainer &&
     window.innerHeight + window.scrollY >= document.body.offsetHeight - 200 &&
     cardsContainer.innerHTML
   ) {
     if (currentPath === "list" && foundCards && foundCards.length > 0) {
       createDomCards(foundCards, "cards-filter-row");
-    } else if (currentPath === "filtrar") {
+    } else if (
+      currentPath === "filtrar" ||
+      currentPath === "index.html" ||
+      !currentPath // home
+    ) {
       createDomCards(await setFilters(false), "cards-filter-row");
     }
   }

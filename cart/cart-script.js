@@ -12,9 +12,17 @@ const getCopyText = () => {
   let quantityOfCards = 0;
   cart.forEach((item) => {
     quantityOfCards += item.quantitySelected;
+    const detalhes = [
+      item.colecao,
+      item.idioma,
+      item.condicao,
+      item.additionalInfo ? `Extra: ${item.additionalInfo}` : "",
+    ]
+      .filter(Boolean)
+      .join(" | ");
     text += `${item.quantitySelected}x ${item.name} - ${formatter.format(
       item.price
-    )} ${item.additionalInfo ? `- Extra: ${item.additionalInfo}` : ""}\n`;
+    )}${detalhes ? ` (${detalhes})` : ""}\n`;
   });
 
   text += `\nTotal: ${formatter.format(getCartTotal(cart))}`;
@@ -66,9 +74,12 @@ const renderCart = (cartParam = []) => {
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td>${item.name}</td>
+      <td>${item.colecao || "-"}</td>
+      <td>${item.idioma || "-"}</td>
+      <td>${item.condicao || "-"}</td>
       <td>${formatter.format(item.price || 0)}</td>
       <td>${item.quantitySelected}</td>
-      <td>${item.additionalInfo}</td>
+      <td>${item.additionalInfo || "-"}</td>
       <td>
         <i style="cursor: pointer;" data-toggle="tooltip-btn-trash" onclick="removeItemFromCart('${
           item.id

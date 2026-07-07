@@ -81,16 +81,8 @@ const getFiltersTemplate = (color) =>`
   <label class="btn filter-chip" for="rare-${rarity.id}">${rarity.name}</label>
   `
 
-  const types = [
-    {id: 'criatura', name: 'Criatura'},
-    {id: 'instantanea', name: 'Instantânea'},
-    {id: 'feitico', name: 'Feitiço'},
-    {id: 'encantamento', name: 'Encantamento'},
-    {id: 'artefato', name: 'Artefato'},
-    {id: 'planeswalker', name: 'Planeswalker'},
-    {id: 'terreno', name: 'Terreno'},
-    {id: 'token', name: 'Token'},
-  ]
+  // Tipo é montado dinamicamente a partir dos tipos presentes na base.
+  let types = [];
 
   const getFiltersTypesTemplate = (type) =>`
   <input class="btn-check" onchange="handleChangedType()" type="checkbox" id="type-${type.id}" autocomplete="off" />
@@ -114,21 +106,16 @@ const getFiltersTemplate = (color) =>`
   };
 
   const condicoes = [
-    { id: 'NM', name: 'NM (Near Mint)' },
-    { id: 'SP', name: 'SP (Slightly Played)' },
-    { id: 'MP', name: 'MP (Moderately Played)' },
-    { id: 'HP', name: 'HP (Heavily Played)' },
-    { id: 'DMG', name: 'DMG (Damaged)' },
+    { id: 'NM', name: 'NM' },
+    { id: 'SP', name: 'SP' },
+    { id: 'MP', name: 'MP' },
+    { id: 'HP', name: 'HP' },
+    { id: 'DMG', name: 'DMG' },
   ];
 
-  const formatos = [
-    { id: 'S', name: 'Standard' },
-    { id: 'P', name: 'Pioneer' },
-    { id: 'M', name: 'Modern' },
-    { id: 'L', name: 'Legacy' },
-    { id: 'V', name: 'Vintage' },
-    { id: 'C', name: 'Commander' },
-  ];
+  // Formato é montado dinamicamente a partir dos formatos presentes na base
+  // (Pauper, Premodern, etc. entram sozinhos).
+  let formatos = [];
 
   const foils = [
     { id: 'foil', name: 'Foil' },
@@ -170,6 +157,14 @@ const getFiltersTemplate = (color) =>`
   const createFormatoFilter = () => {
     const el = document.getElementById('formato-filters');
     if (!el) return;
+    const cards = JSON.parse(localStorage.getItem('cards')) || [];
+    const tokens = [
+      ...new Set(
+        cards.flatMap((c) => (c.formato || '').split('-').map((t) => t.trim())).filter(Boolean)
+      ),
+    ].sort((a, b) => a.localeCompare(b));
+    formatos = tokens.map((t) => ({ id: normalizeSearch(t), name: t }));
+    el.innerHTML = '';
     formatos.forEach((f) => (el.innerHTML += getGenericCheckboxTemplate(f, 'fmt-')));
   };
 
@@ -260,9 +255,16 @@ const createRaritiesFilter = () => {
 
 const createTypeFilter = () => {
   const typeFilters = document.getElementById('type-filters');
-  types.forEach(type => {
-    typeFilters.innerHTML += getFiltersTypesTemplate(type);
-  });
+  if (!typeFilters) return;
+  const cards = JSON.parse(localStorage.getItem('cards')) || [];
+  const tokens = [
+    ...new Set(
+      cards.flatMap((c) => (c.Tipo || '').split('-').map((t) => t.trim())).filter(Boolean)
+    ),
+  ].sort((a, b) => a.localeCompare(b));
+  types = tokens.map((t) => ({ id: normalizeSearch(t), name: t }));
+  typeFilters.innerHTML = '';
+  types.forEach((type) => (typeFilters.innerHTML += getFiltersTypesTemplate(type)));
 }
 
 const resetItem = (array, key) => {
@@ -311,41 +313,6 @@ const setFilters = async (setInHtml = false) => {
   let cards = JSON.parse(localStorage.getItem('cards'));
 
   notFoundText.hidden = true;
-
-  if(changedColors) {
-    cardsContainer.innerHTML = '';
-    changedColors = false;
-    lastSlice = 0;
-  }
-
-  if(changedCMC) {
-    cardsContainer.innerHTML = '';
-    changedCMC = false;
-    lastSlice = 0;
-  }
-
-  if(changedOrder) {
-    cardsContainer.innerHTML = '';
-    changedOrder = false;
-    lastSlice = 0;
-  }
-
-  if(changedRarity) {
-    cardsContainer.innerHTML = '';
-    changedRarity = false;
-    lastSlice = 0;
-  }
-  if(changedType) {
-    cardsContainer.innerHTML = '';
-    changedType = false;
-    lastSlice = 0;
-  }
-
-  if(changedNew) {
-    cardsContainer.innerHTML = '';
-    changedNew = false;
-    lastSlice = 0;
-  }
 
   if(checkIfHasSelected(colors, '')) {
     cards = cardsFilterRow(cards);
@@ -538,11 +505,13 @@ const condicaoFilterRow = (cards) => {
 };
 
 const formatoFilterRow = (cards) => {
-  const selected = getCheckedIds(formatos, 'fmt-');
+  const selected = formatos
+    .filter((f) => document.getElementById('fmt-' + f.id)?.checked)
+    .map((f) => normalizeSearch(f.name));
   if (selected.length <= 0) return cards;
   return cards.filter((card) => {
-    const cardFormats = (card.formato || '').split('-');
-    return selected.some((letter) => cardFormats.includes(letter));
+    const toks = (card.formato || '').split('-').map((t) => normalizeSearch(t));
+    return selected.some((s) => toks.includes(s));
   });
 };
 
@@ -736,9 +705,16 @@ const liveApply = () => {
   }, 0);
 };
 
+// Aplica os filtros (renderiza) e recolhe o painel. Usado pelo botão "Filtrar"
+// (desktop) e "Ver resultados" (gaveta mobile).
+const aplicarFiltros = () => {
+  liveApply();
+  hideFilter();
+};
+
 const wireLiveFiltering = () => {
-  const filtersEl = document.getElementById('filters');
-  if (filtersEl) filtersEl.addEventListener('change', liveApply);
+  // As facetas (chips/comboboxes) NÃO filtram ao selecionar — só ao clicar em
+  // "Filtrar". Busca e ordenação continuam ao vivo.
   const orderEl = document.getElementById('order-select');
   if (orderEl) orderEl.addEventListener('change', liveApply);
   const searchEl = document.getElementById('search');
@@ -746,7 +722,7 @@ const wireLiveFiltering = () => {
     let deb;
     searchEl.addEventListener('input', () => {
       clearTimeout(deb);
-      deb = setTimeout(liveApply, 250);
+      deb = setTimeout(liveApply, 300);
     });
   }
 };

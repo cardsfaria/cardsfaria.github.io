@@ -10,7 +10,7 @@
       integrity="sha384-Zenh87qX5JnK2Jl0vWa8Ck2rdkQ2Bzep5IDxbcnCeuOxjzrPF/et3URy9Bv1WTRi"
       crossorigin="anonymous"
     />
-    <link rel="stylesheet" href="test.css?v=20260706a" />
+    <link rel="stylesheet" href="test.css?v=20260707a" />
     <link rel="icon" type="image/x-icon" href="./ico.png" />
     <link
       rel="stylesheet"
@@ -81,6 +81,13 @@
           <i class="fa-solid fa-sliders"></i>
           <span id="filter-toggle-text">Filtros</span>
         </button>
+        <button
+          class="filter-apply-top"
+          type="button"
+          onclick="aplicarFiltros()"
+        >
+          <i class="fa-solid fa-magnifying-glass"></i> Filtrar
+        </button>
       </div>
 
       <div id="active-filters" class="active-filters" style="display: none"></div>
@@ -108,12 +115,12 @@
           <div class="filter-chips" id="rarity-filters"></div>
         </div>
         <div class="filter-group">
-          <span class="filter-group__label">Tipo</span>
-          <div class="filter-chips" id="type-filters"></div>
-        </div>
-        <div class="filter-group">
           <span class="filter-group__label">Custo</span>
           <div class="filter-chips" id="cmc-filters"></div>
+        </div>
+        <div class="filter-group">
+          <span class="filter-group__label">Tipo</span>
+          <div class="filter-chips" id="type-filters"></div>
         </div>
         <div class="filter-group">
           <span class="filter-group__label">Idioma</span>
@@ -147,22 +154,32 @@
           <button type="button" class="btn-clear" onclick="resetFilter()">
             <i class="fa-solid fa-arrow-rotate-left"></i> Limpar
           </button>
-          <button type="button" class="btn-apply" onclick="hideFilter()">
-            Ver <span id="apply-count">resultados</span>
+          <button type="button" class="btn-apply" onclick="aplicarFiltros()">
+            Ver resultados
           </button>
         </div>
-      </div>
 
-      <div class="filter-footer">
-        <span id="result-count" class="result-count"></span>
-        <button
-          class="btn-clear"
-          id="reset-btn"
-          type="button"
-          onclick="resetFilter()"
-        >
-          <i class="fa-solid fa-arrow-rotate-left"></i> Limpar filtros
-        </button>
+        <div class="filter-footer">
+          <span id="result-count" class="result-count"></span>
+          <div class="filter-footer-actions">
+            <button
+              class="btn-clear"
+              id="reset-btn"
+              type="button"
+              onclick="resetFilter()"
+            >
+              <i class="fa-solid fa-arrow-rotate-left"></i> Limpar
+            </button>
+            <button
+              class="btn-apply"
+              id="apply-btn"
+              type="button"
+              onclick="aplicarFiltros()"
+            >
+              <i class="fa-solid fa-magnifying-glass"></i> Filtrar
+            </button>
+          </div>
+        </div>
       </div>
     </div>
     <button
@@ -191,8 +208,8 @@
       crossorigin="anonymous"
     ></script>
     <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
-    <script src="/menu-script.js?v=20260706a"></script>
-    <script src="/cards-script.js?v=20260706a"></script>
-    <script src="/script-test.js?v=20260706a"></script>
+    <script src="/menu-script.js?v=20260707a"></script>
+    <script src="/cards-script.js?v=20260707a"></script>
+    <script src="/script-test.js?v=20260707a"></script>
   </body>
 </html>
