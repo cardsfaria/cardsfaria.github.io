@@ -111,12 +111,15 @@ if (mybutton) {
   mybutton.addEventListener("click", backToTop);
 }
 
-// Em desenvolvimento (localhost) consome a API local; em produção, a API real.
-const API_BASE =
-  window.location.hostname === "localhost" ||
-  window.location.hostname === "127.0.0.1"
-    ? "http://127.0.0.1:8000"
-    : "https://api.cardsfaria.com";
+// Produção (cardsfaria.com / github.io) usa a API real. Qualquer outro host
+// (localhost, 127.0.0.1 ou IP da rede local ao testar no celular) usa a API no
+// MESMO host na porta 8000 — assim o celular alcança o servidor de dev.
+const IS_PROD =
+  /(^|\.)cardsfaria\.com$/.test(window.location.hostname) ||
+  window.location.hostname.endsWith("github.io");
+const API_BASE = IS_PROD
+  ? "https://api.cardsfaria.com"
+  : `${window.location.protocol}//${window.location.hostname}:8000`;
 
 const getCards = () => {
   return fetch(`${API_BASE}/api/fetchCards`);
