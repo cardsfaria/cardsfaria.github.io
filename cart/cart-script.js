@@ -12,6 +12,7 @@ const getCopyText = () => {
   let quantityOfCards = 0;
   cart.forEach((item) => {
     quantityOfCards += item.quantitySelected;
+    const codigo = item.searchCode ? ` [${item.searchCode}]` : "";
     const detalhes = [
       item.colecao,
       item.idioma,
@@ -20,7 +21,7 @@ const getCopyText = () => {
     ]
       .filter(Boolean)
       .join(" | ");
-    text += `${item.quantitySelected}x ${item.name} - ${formatter.format(
+    text += `${item.quantitySelected}x ${item.name}${codigo} - ${formatter.format(
       item.price
     )}${detalhes ? ` (${detalhes})` : ""}\n`;
   });
@@ -74,6 +75,7 @@ const renderCart = (cartParam = []) => {
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td>${item.name}</td>
+      <td>${item.searchCode || "-"}</td>
       <td>${item.colecao || "-"}</td>
       <td>${item.idioma || "-"}</td>
       <td>${item.condicao || "-"}</td>

@@ -97,12 +97,12 @@ const getFiltersTemplate = (color) =>`
     EN: 'Inglês', PT: 'Português', ES: 'Espanhol', SP: 'Espanhol',
     JP: 'Japonês', JA: 'Japonês', FR: 'Francês', DE: 'Alemão',
     IT: 'Italiano', RU: 'Russo', KR: 'Coreano', KO: 'Coreano',
-    CN: 'Chinês', ZH: 'Chinês',
+    CN: 'Chinês', ZH: 'Chinês', CH: 'Chinês',
   };
   const IDIOMA_FLAGS = {
     EN: '🇺🇸', PT: '🇧🇷', BR: '🇧🇷', ES: '🇪🇸', SP: '🇪🇸',
     JP: '🇯🇵', JA: '🇯🇵', FR: '🇫🇷', DE: '🇩🇪', IT: '🇮🇹',
-    RU: '🇷🇺', KR: '🇰🇷', KO: '🇰🇷', CN: '🇨🇳', ZH: '🇨🇳',
+    RU: '🇷🇺', KR: '🇰🇷', KO: '🇰🇷', CN: '🇨🇳', ZH: '🇨🇳', CH: '🇨🇳',
   };
 
   const condicoes = [
@@ -134,10 +134,17 @@ const getFiltersTemplate = (color) =>`
     return FORMATO_MAP[k] || token.trim();
   };
 
-  const foils = [
-    { id: 'foil', name: 'Foil' },
-    { id: 'promo', name: 'Promo' },
-  ];
+  // Acabamento é montado dinamicamente a partir dos valores da base
+  // (FOIL, Borderless, Promo-Foil, Arte Extendida, etc.).
+  let foils = [];
+  const getAcab = (card) => (card.acabamento || card['FOIL?'] || '').trim();
+  const titleCaseAcab = (v) =>
+    v
+      .split(/(\s|-)/)
+      .map((w) =>
+        /^[a-zà-úA-ZÀ-Ú]/.test(w) ? w.charAt(0).toUpperCase() + w.slice(1).toLowerCase() : w
+      )
+      .join('');
 
   // Filtros de checkbox novos disparam uma limpeza genérica do container.
   let changedNew = false;
@@ -189,6 +196,18 @@ const getFiltersTemplate = (color) =>`
   const createFoilFilter = () => {
     const el = document.getElementById('foil-filters');
     if (!el) return;
+    const cards = JSON.parse(localStorage.getItem('cards')) || [];
+    const seen = new Map(); // normalizado -> nome de exibição
+    cards.forEach((c) => {
+      const v = getAcab(c);
+      if (!v) return;
+      const key = normalizeSearch(v);
+      if (!seen.has(key)) seen.set(key, titleCaseAcab(v));
+    });
+    foils = [...seen.entries()]
+      .map(([id, name]) => ({ id, name }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+    el.innerHTML = '';
     foils.forEach((f) => (el.innerHTML += getGenericCheckboxTemplate(f, 'foil-')));
   };
 
@@ -490,12 +509,9 @@ const typesFilterRow = (cards) => {
 const foilFilterRow = (cards) => {
   const selected = foils
     .filter((f) => document.getElementById('foil-' + f.id)?.checked)
-    .map((f) => f.id);
+    .map((f) => f.id); // ids são o acabamento normalizado
   if (selected.length <= 0) return cards;
-  return cards.filter((card) => {
-    const v = (card['FOIL?'] || '').toLowerCase();
-    return selected.some((s) => v.includes(s));
-  });
+  return cards.filter((card) => selected.includes(normalizeSearch(getAcab(card))));
 }
 
 const artistaFilterRow = (cards) => {
