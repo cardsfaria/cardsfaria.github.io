@@ -653,6 +653,10 @@ const checkIfHasSelected = (array, key = '') => {
 }
 
 // ---- UX ao vivo: contador de resultados, filtros ativos e auto-aplicar ----
+// Soma as unidades disponíveis (qty) — não conta cards únicos.
+const sumQty = (cards) =>
+  (cards || []).reduce((acc, c) => acc + (parseInt(c.qty) || 0), 0);
+
 const updateResultCount = (n) => {
   const label = `${n === 1 ? 'carta' : 'cartas'}`;
   const el = document.getElementById('result-count');
@@ -741,7 +745,7 @@ const liveApply = () => {
     if (container) container.innerHTML = '';
     lastSlice = 0;
     Promise.resolve(setFilters(true)).then((cards) => {
-      updateResultCount((cards || []).length);
+      updateResultCount(sumQty(cards));
       renderActiveFilters();
     });
   }, 0);
