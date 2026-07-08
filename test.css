@@ -402,18 +402,25 @@ button[id^="cart-"] {
   .filter-apply-top { display: none; }
 }
 
-/* Estado "filtro ativo": inverte o botão Filtrar e pulsa para chamar atenção. */
-.filter-apply-top.is-active,
-#apply-btn.is-active {
-  background: var(--ff-panel-2);
-  color: var(--ff-gold-2);
-  border: 2px solid var(--ff-gold);
-  animation: pulse-filter 1.6s ease-in-out infinite;
+/* Filtro ativo: TROCA as cores entre "Filtros" e "Filtrar" (sem glow).
+   Filtros fica dourado (chama atenção) e Filtrar fica neutro (preto/branco). */
+.filter-toggle.is-active {
+  background: linear-gradient(180deg, var(--ff-gold-2), var(--ff-gold));
+  border-color: var(--ff-gold-2);
+  color: #231a05;
+  font-weight: 700;
 }
-@keyframes pulse-filter {
-  0%, 100% { box-shadow: 0 0 0 2px var(--ff-gold-soft); }
-  50% { box-shadow: 0 0 0 6px var(--ff-gold-soft), 0 4px 18px -2px rgba(231, 182, 75, 0.55); }
+.filter-toggle.is-active:hover {
+  background: linear-gradient(180deg, var(--ff-gold-2), var(--ff-gold));
 }
+.filter-apply-top.is-active {
+  background: var(--ff-panel);
+  color: var(--ff-text);
+  border: 1px solid var(--ff-border);
+  box-shadow: none;
+  font-weight: 600;
+}
+.filter-apply-top.is-active:hover { filter: none; background: var(--ff-panel-2); }
 
 /* ---- Painel em grid (visível só quando .is-open) ---- */
 .filter-panel {

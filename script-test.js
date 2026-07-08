@@ -703,10 +703,11 @@ const renderActiveFilters = () => {
     tags.push({ label: v, clear: () => deselectValue('artista-select', v) })
   );
 
-  // Marca o botão "Filtrar" como ativo (invertido/pulsando) quando há filtro aplicado.
+  // Filtro aplicado: troca as cores entre "Filtros" (fica dourado) e "Filtrar"
+  // (fica neutro) na toolbar, pra sinalizar que há filtro ativo.
   const searchVal = (document.getElementById('search')?.value || '').trim();
   const hasActive = tags.length > 0 || searchVal.length > 0;
-  document.querySelectorAll('.filter-apply-top, #apply-btn').forEach((b) => {
+  document.querySelectorAll('.filter-toggle, .filter-apply-top').forEach((b) => {
     if (b) b.classList.toggle('is-active', hasActive);
   });
 
