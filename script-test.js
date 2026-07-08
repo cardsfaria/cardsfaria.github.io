@@ -703,6 +703,13 @@ const renderActiveFilters = () => {
     tags.push({ label: v, clear: () => deselectValue('artista-select', v) })
   );
 
+  // Marca o botão "Filtrar" como ativo (invertido/pulsando) quando há filtro aplicado.
+  const searchVal = (document.getElementById('search')?.value || '').trim();
+  const hasActive = tags.length > 0 || searchVal.length > 0;
+  document.querySelectorAll('.filter-apply-top, #apply-btn').forEach((b) => {
+    if (b) b.classList.toggle('is-active', hasActive);
+  });
+
   box.innerHTML = '';
   if (tags.length <= 0) {
     box.style.display = 'none';

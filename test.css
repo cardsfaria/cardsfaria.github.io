@@ -402,6 +402,19 @@ button[id^="cart-"] {
   .filter-apply-top { display: none; }
 }
 
+/* Estado "filtro ativo": inverte o botão Filtrar e pulsa para chamar atenção. */
+.filter-apply-top.is-active,
+#apply-btn.is-active {
+  background: var(--ff-panel-2);
+  color: var(--ff-gold-2);
+  border: 2px solid var(--ff-gold);
+  animation: pulse-filter 1.6s ease-in-out infinite;
+}
+@keyframes pulse-filter {
+  0%, 100% { box-shadow: 0 0 0 2px var(--ff-gold-soft); }
+  50% { box-shadow: 0 0 0 6px var(--ff-gold-soft), 0 4px 18px -2px rgba(231, 182, 75, 0.55); }
+}
+
 /* ---- Painel em grid (visível só quando .is-open) ---- */
 .filter-panel {
   background: var(--ff-panel);
@@ -416,6 +429,14 @@ button[id^="cart-"] {
 @media (min-width: 992px) {
   .filter-panel { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
+/* No desktop, o painel vira uma caixa com rolagem interna e altura limitada,
+   deixando parte das cartas aparecer logo abaixo. */
+@media (min-width: 768px) {
+  .filter-panel {
+    max-height: 60vh;
+    overflow-y: auto;
+  }
+}
 .filter-group {
   display: flex;
   flex-direction: column;
@@ -423,6 +444,22 @@ button[id^="cart-"] {
   min-width: 0;
 }
 .filter-group--wide { grid-column: 1 / -1; }
+
+/* Coleção | Artista lado a lado */
+.filter-duo {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.3rem 1.8rem;
+}
+.filter-duo .filter-subgroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  min-width: 0;
+}
+@media (max-width: 575.98px) {
+  .filter-duo { grid-template-columns: 1fr; }
+}
 .filter-group__label {
   font-size: 0.72rem;
   letter-spacing: 0.14em;
