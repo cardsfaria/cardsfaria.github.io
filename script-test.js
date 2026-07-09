@@ -138,6 +138,13 @@ const getFiltersTemplate = (color) =>`
   // (FOIL, Borderless, Promo-Foil, Arte Extendida, etc.).
   let foils = [];
   const getAcab = (card) => (card.acabamento || card['FOIL?'] || '').trim();
+  // "Promo-Foil" conta como DOIS acabamentos: Promo + Foil. Quebra por hífen
+  // para que o card apareça sob "Promo" e sob "Foil" (e o chip combinado suma).
+  const getAcabTokens = (card) =>
+    getAcab(card)
+      .split('-')
+      .map((t) => t.trim())
+      .filter(Boolean);
   const titleCaseAcab = (v) =>
     v
       .split(/(\s|-)/)
@@ -199,10 +206,11 @@ const getFiltersTemplate = (color) =>`
     const cards = JSON.parse(localStorage.getItem('cards')) || [];
     const seen = new Map(); // normalizado -> nome de exibição
     cards.forEach((c) => {
-      const v = getAcab(c);
-      if (!v) return;
-      const key = normalizeSearch(v);
-      if (!seen.has(key)) seen.set(key, titleCaseAcab(v));
+      // usa tokens: "Promo-Foil" vira "Promo" e "Foil" separados (sem chip combinado).
+      getAcabTokens(c).forEach((v) => {
+        const key = normalizeSearch(v);
+        if (!seen.has(key)) seen.set(key, titleCaseAcab(v));
+      });
     });
     foils = [...seen.entries()]
       .map(([id, name]) => ({ id, name }))
@@ -511,7 +519,11 @@ const foilFilterRow = (cards) => {
     .filter((f) => document.getElementById('foil-' + f.id)?.checked)
     .map((f) => f.id); // ids são o acabamento normalizado
   if (selected.length <= 0) return cards;
-  return cards.filter((card) => selected.includes(normalizeSearch(getAcab(card))));
+  // Card casa se QUALQUER um dos seus tokens estiver selecionado.
+  // Ex.: "Promo-Foil" -> ["promo","foil"] casa com "Promo" OU "Foil".
+  return cards.filter((card) =>
+    getAcabTokens(card).some((t) => selected.includes(normalizeSearch(t)))
+  );
 }
 
 const artistaFilterRow = (cards) => {
