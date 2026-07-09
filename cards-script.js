@@ -4,6 +4,25 @@ const formatter = new Intl.NumberFormat("pt-BR", {
   currency: "BRL"
 });
 
+// Versão do schema dos cards no localStorage. Sempre que a FORMA dos dados
+// mudar (novos campos vindos da API, mudança de estrutura), incremente aqui.
+// Se a versão salva no aparelho for diferente, limpamos o cache local e
+// rebuscamos da API — evita que um dispositivo com dados antigos trave o site.
+const CARDS_SCHEMA_VERSION = "2026-07-08";
+
+const ensureCardsSchema = () => {
+  try {
+    if (localStorage.getItem("cardsSchema") !== CARDS_SCHEMA_VERSION) {
+      localStorage.removeItem("cards");
+      localStorage.removeItem("lastModified");
+      localStorage.removeItem("colors");
+      localStorage.setItem("cardsSchema", CARDS_SCHEMA_VERSION);
+    }
+  } catch (e) {
+    // localStorage indisponível (modo privado/quota) — segue sem cache.
+  }
+};
+
 document.getElementById("menu-button")?.click();
 
 const cartToast = (text, ok = true) =>
@@ -330,6 +349,9 @@ window.onscroll = async function () {
     searchBtn.disabled = true;
     resetBtn.disabled = true;
   }
+
+  // Cache antigo (schema diferente) é descartado antes de qualquer leitura.
+  ensureCardsSchema();
 
   if (localStorage.getItem("cards") && localStorage.getItem("lastModified")) {
     const lastModified = new Date(localStorage.getItem("lastModified"));
