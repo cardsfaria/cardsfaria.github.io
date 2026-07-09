@@ -39,16 +39,71 @@ const loadCards = () => {
 };
 window.loadCards = loadCards;
 
-// Retorna true se conseguiu PERSISTIR (aí vale o reload). Se só coube em memória
-// retorna false e o chamador deve renderizar sem recarregar a página.
-const saveCards = (cards) => {
-  window.__cardsMem = cards;
+// ---- IndexedDB: cache grande que PERSISTE no iOS (onde o localStorage, ~5MB,
+// recusa o catálogo). Assíncrono; usado como fonte para hidratar a memória no
+// boot. Cai de pé (retorna vazio/false) se indexedDB estiver indisponível
+// (ex.: modo privado antigo do Safari). ----
+const IDB_NAME = "cardsfaria";
+const IDB_STORE = "kv";
+
+const idbOpen = () =>
+  new Promise((resolve, reject) => {
+    try {
+      const req = indexedDB.open(IDB_NAME, 1);
+      req.onupgradeneeded = () => req.result.createObjectStore(IDB_STORE);
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    } catch (e) {
+      reject(e);
+    }
+  });
+
+const idbGet = async (key) => {
   try {
-    localStorage.setItem("cards", JSON.stringify(cards));
-    localStorage.setItem("lastModified", new Date().toISOString());
-    return true;
+    const db = await idbOpen();
+    return await new Promise((resolve, reject) => {
+      const tx = db.transaction(IDB_STORE, "readonly");
+      const req = tx.objectStore(IDB_STORE).get(key);
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+  } catch (e) {
+    return undefined;
+  }
+};
+
+const idbSet = async (key, val) => {
+  try {
+    const db = await idbOpen();
+    return await new Promise((resolve, reject) => {
+      const tx = db.transaction(IDB_STORE, "readwrite");
+      tx.objectStore(IDB_STORE).put(val, key);
+      tx.oncomplete = () => resolve(true);
+      tx.onerror = () => reject(tx.error);
+    });
   } catch (e) {
     return false;
+  }
+};
+window.idbGet = idbGet;
+
+// Persiste os cards em: memória (leitura síncrona) + IndexedDB (persistente,
+// iOS) + localStorage (rápido no desktop). O carimbo de tempo vai junto.
+const saveCards = (cards) => {
+  window.__cardsMem = cards;
+  const stamp = new Date().toISOString();
+  window.__cardsMemTime = stamp;
+
+  // IndexedDB — assíncrono, não bloqueia o render (fire and forget).
+  idbSet("cards", cards);
+  idbSet("meta", { lastModified: stamp, schema: CARDS_SCHEMA_VERSION });
+
+  try {
+    localStorage.setItem("cards", JSON.stringify(cards));
+    localStorage.setItem("lastModified", stamp);
+    return true;
+  } catch (e) {
+    return false; // localStorage cheio (iOS) — segue via memória + IndexedDB.
   }
 };
 window.saveCards = saveCards;
@@ -311,27 +366,21 @@ const separeteCards = async (category = null) => {
       }
     }
   }
-  const persisted = saveCards(cards);
+  saveCards(cards);
 
   if (loading) {
     loading.hidden = true;
   }
 
-  if (persisted) {
-    // Caminho normal: os dados ficaram no localStorage; recarrega para que todos
-    // os scripts (filtros, cart) leiam do cache já populado.
-    window.location.reload();
-  } else {
-    // Sem persistência (cota iOS/modo privado): não recarrega — os dados só
-    // existem em memória. Re-inicializa a página de estoque diretamente.
-    if (typeof window.renderCardsPage === "function") {
-      window.renderCardsPage();
-    } else if (typeof setFilters === "function") {
-      setFilters(true);
-    }
-    // Em páginas sem esses hooks (ex.: card/list), os dados já estão em
-    // window.__cardsMem e o script da página os lê via loadCards().
+  // Renderiza direto da memória (sem reload — igual em todas as plataformas).
+  // Cada página registra sua função em window.renderCardsPage.
+  if (typeof window.renderCardsPage === "function") {
+    window.renderCardsPage();
+  } else if (typeof setFilters === "function") {
+    setFilters(true);
   }
+  // Em páginas sem esses hooks (ex.: card/list), os dados já estão em
+  // window.__cardsMem/IndexedDB e o script da página os lê via loadCards().
 
   return cards;
 };
@@ -397,19 +446,40 @@ window.onscroll = async function () {
   // Cache antigo (schema diferente) é descartado antes de qualquer leitura.
   ensureCardsSchema();
 
-  if (localStorage.getItem("cards") && localStorage.getItem("lastModified")) {
-    const lastModified = new Date(localStorage.getItem("lastModified"));
-    const addMinutes = 15;
-    const lastModifiedPlusHour = new Date(
-      lastModified.getTime() + addMinutes * 60000
-    );
-    const now = new Date();
-    if (now >= lastModifiedPlusHour) {
-      await separeteCards();
+  // Descobre o carimbo de tempo do cache. No desktop vem do localStorage; no
+  // iOS (localStorage cheio) hidrata a memória a partir do IndexedDB.
+  let lastModified = localStorage.getItem("lastModified");
+
+  if (loadCards().length === 0) {
+    const [idbCards, idbMeta] = await Promise.all([
+      idbGet("cards"),
+      idbGet("meta"),
+    ]);
+    if (idbMeta && idbMeta.schema !== CARDS_SCHEMA_VERSION) {
+      // Schema mudou: descarta o cache do IndexedDB.
+      await idbSet("cards", null);
+    } else if (Array.isArray(idbCards) && idbCards.length) {
+      window.__cardsMem = idbCards;
+      lastModified = (idbMeta && idbMeta.lastModified) || lastModified;
+    }
+  }
+
+  const CACHE_MINUTES = 15;
+  const fresh =
+    loadCards().length > 0 &&
+    lastModified &&
+    Date.now() - new Date(lastModified).getTime() < CACHE_MINUTES * 60000;
+
+  if (fresh) {
+    // Cache válido (localStorage ou IndexedDB) — renderiza sem buscar da API.
+    if (typeof window.renderCardsPage === "function") {
+      window.renderCardsPage();
     }
   } else {
+    // Sem cache ou cache velho — busca da API (separeteCards renderiza no fim).
     await separeteCards();
   }
+
   if (searchBtn && resetBtn) {
     searchBtn.disabled = false;
     resetBtn.disabled = false;

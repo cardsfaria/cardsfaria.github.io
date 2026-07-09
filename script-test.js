@@ -852,6 +852,9 @@ window.initEstoquePage = initEstoquePage;
 // Renderiza a página "Adicionadas Recentemente" (só as cartas com "RA").
 const initRecentesPage = () => {
   if (loadCards().length > 0) {
+    // Limpa antes de renderizar — pode ser chamado 2x (render síncrono + boot).
+    const cont = document.getElementById('cardss');
+    if (cont) cont.innerHTML = '';
     createDomCards(getRecentCards(), 'cardss', true);
   } else {
     // Dados ainda não chegaram: mantém "Carregando..." até separeteCards()
