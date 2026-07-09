@@ -4,7 +4,9 @@ const { urlCard } = Object.fromEntries(urlSearchParams.entries());
 if(!urlCard) {
   window.location.href = '/';
 }
-const cards = JSON.parse(localStorage.getItem('cards'));
+const cards = typeof loadCards === 'function'
+  ? loadCards()
+  : (JSON.parse(localStorage.getItem('cards')) || []);
 const card  = cards.find(card => card.id === parseInt(urlCard));
 
 const getColorsTemplate = (colors) => {

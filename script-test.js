@@ -165,7 +165,7 @@ const getFiltersTemplate = (color) =>`
   const createIdiomaFilter = () => {
     const el = document.getElementById('idioma-filters');
     if (!el) return;
-    const cards = JSON.parse(localStorage.getItem('cards')) || [];
+    const cards = loadCards();
     const codes = [
       ...new Set(
         cards.map((c) => (c.idioma || '').toUpperCase().trim()).filter(Boolean)
@@ -182,13 +182,14 @@ const getFiltersTemplate = (color) =>`
   const createCondicaoFilter = () => {
     const el = document.getElementById('condicao-filters');
     if (!el) return;
+    el.innerHTML = '';
     condicoes.forEach((c) => (el.innerHTML += getGenericCheckboxTemplate(c, 'cond-')));
   };
 
   const createFormatoFilter = () => {
     const el = document.getElementById('formato-filters');
     if (!el) return;
-    const cards = JSON.parse(localStorage.getItem('cards')) || [];
+    const cards = loadCards();
     // converte cada token pro nome por extenso (aceita letra da API antiga)
     const tokens = [
       ...new Set(
@@ -203,7 +204,7 @@ const getFiltersTemplate = (color) =>`
   const createFoilFilter = () => {
     const el = document.getElementById('foil-filters');
     if (!el) return;
-    const cards = JSON.parse(localStorage.getItem('cards')) || [];
+    const cards = loadCards();
     const seen = new Map(); // normalizado -> nome de exibição
     cards.forEach((c) => {
       // usa tokens: "Promo-Foil" vira "Promo" e "Foil" separados (sem chip combinado).
@@ -228,6 +229,9 @@ const getFiltersTemplate = (color) =>`
   const initTomSelect = (selectId, placeholder) => {
     const el = document.getElementById(selectId);
     if (!el || typeof TomSelect === 'undefined') return null;
+    // Idempotente: initEstoquePage pode rodar 2x (fallback em memória do iOS).
+    // Se já houver uma instância no elemento, destrói antes de recriar.
+    if (el.tomselect) el.tomselect.destroy();
     return new TomSelect(el, {
       plugins: ['remove_button'],
       maxItems: null,
@@ -251,15 +255,27 @@ const getFiltersTemplate = (color) =>`
       });
   };
 
+  // Zera um <select> antes de repopular. Se já houver Tom Select nele, destrói
+  // primeiro (senão o innerHTML='' não limpa o combobox) — necessário porque
+  // initEstoquePage pode rodar 2x no fallback em memória do iOS.
+  const resetSelect = (selectId) => {
+    const el = document.getElementById(selectId);
+    if (!el) return;
+    if (el.tomselect) el.tomselect.destroy();
+    el.innerHTML = '';
+  };
+
   const createColecaoFilter = () => {
-    const cards = JSON.parse(localStorage.getItem('cards')) || [];
+    resetSelect('colecao-select');
+    const cards = loadCards();
     const distinct = [...new Set(cards.map((c) => c.colecao))];
     populateSelect('colecao-select', distinct);
     tomColecao = initTomSelect('colecao-select', 'Todas as coleções…');
   };
 
   const createSubtipoFilter = () => {
-    const cards = JSON.parse(localStorage.getItem('cards')) || [];
+    resetSelect('subtipo-select');
+    const cards = loadCards();
     // Subtipo pode ser composto ("Cobra-Ninja-Ladino") -> lista os subtipos individuais.
     const distinct = [
       ...new Set(
@@ -271,7 +287,8 @@ const getFiltersTemplate = (color) =>`
   };
 
   const createArtistaFilter = () => {
-    const cards = JSON.parse(localStorage.getItem('cards')) || [];
+    resetSelect('artista-select');
+    const cards = loadCards();
     const distinct = [...new Set(cards.map((c) => c.artista))];
     populateSelect('artista-select', distinct);
     tomArtista = initTomSelect('artista-select', 'Todos os artistas…');
@@ -279,6 +296,7 @@ const getFiltersTemplate = (color) =>`
 
 const createFilter = () => {
   const colorFilters = document.getElementById('color-filters');
+  colorFilters.innerHTML = '';
   colors.forEach(color => {
     colorFilters.innerHTML += getFiltersTemplate(color);
   });
@@ -286,6 +304,7 @@ const createFilter = () => {
 
 const createCMCFilter = () => {
   const cmcFilters = document.getElementById('cmc-filters');
+  cmcFilters.innerHTML = '';
   cmcs.forEach(cmc => {
     cmcFilters.innerHTML += getFiltersCMCTemplate(cmc);
   });
@@ -293,6 +312,7 @@ const createCMCFilter = () => {
 
 const createRaritiesFilter = () => {
   const rarityFilters = document.getElementById('rarity-filters');
+  rarityFilters.innerHTML = '';
   rarities.forEach(rarity => {
     rarityFilters.innerHTML += getFiltersRarityTemplate(rarity);
   });
@@ -301,7 +321,7 @@ const createRaritiesFilter = () => {
 const createTypeFilter = () => {
   const typeFilters = document.getElementById('type-filters');
   if (!typeFilters) return;
-  const cards = JSON.parse(localStorage.getItem('cards')) || [];
+  const cards = loadCards();
   const tokens = [
     ...new Set(
       cards.flatMap((c) => (c.Tipo || '').split('-').map((t) => t.trim())).filter(Boolean)
@@ -355,7 +375,7 @@ let lastSearch = '';
 const setFilters = async (setInHtml = false) => {
   // Não esconde mais o painel aqui: a filtragem é ao vivo e o painel fica aberto.
   const cardsContainer = document.getElementById('cards-filter-row');
-  let cards = JSON.parse(localStorage.getItem('cards'));
+  let cards = loadCards();
 
   notFoundText.hidden = true;
 
@@ -618,7 +638,7 @@ const setOrder = (order, field, cards) => {
 // "Adicionadas Recentemente": mostra só as cartas destacadas na planilha —
 // as que têm "RA" na coluna RA.
 const getRecentCards = () => {
-  const cards = JSON.parse(localStorage.getItem('cards')) || [];
+  const cards = loadCards();
   const destaques = cards.filter((c) => (c.ra || '').toUpperCase() === 'RA');
   if (destaques.length <= 0) {
     const href = document.getElementById('not-found-cards-href');
@@ -794,11 +814,10 @@ const wireLiveFiltering = () => {
   }
 };
 
-if(currentPath.includes('recentes')) {
-  // Página "Adicionadas Recentemente".
-  createDomCards(getRecentCards(), 'cardss', true);
-} else if(currentPath.includes('filtrar') || currentPath.includes('index') || !currentPath) {
-  // Home (/) e /filtrar são a página de filtros/estoque.
+// Monta os filtros a partir dos cards e renderiza. Fica global para que
+// separeteCards() possa re-inicializar a página quando não houve reload
+// (fallback em memória do iOS/modo privado).
+const initEstoquePage = () => {
   createFilter();
   createCMCFilter();
   createRaritiesFilter();
@@ -817,4 +836,13 @@ if(currentPath.includes('recentes')) {
   setFiltersOpen(window.innerWidth >= 992);
 
   liveApply();
+};
+window.initEstoquePage = initEstoquePage;
+
+if(currentPath.includes('recentes')) {
+  // Página "Adicionadas Recentemente".
+  createDomCards(getRecentCards(), 'cardss', true);
+} else if(currentPath.includes('filtrar') || currentPath.includes('index') || !currentPath) {
+  // Home (/) e /filtrar são a página de filtros/estoque.
+  initEstoquePage();
 }

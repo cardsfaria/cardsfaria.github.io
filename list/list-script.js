@@ -32,7 +32,9 @@ const searchForList = () => {
     }).showToast();
   }
 
-  const cards = JSON.parse(localStorage.getItem("cards")) || [];
+  const cards = (typeof loadCards === "function"
+    ? loadCards()
+    : JSON.parse(localStorage.getItem("cards")) || []);
   const arrayList = list.split("\n");
 
   arrayList.forEach((rawLine) => {

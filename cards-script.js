@@ -23,6 +23,36 @@ const ensureCardsSchema = () => {
   }
 };
 
+// Fallback em memória. O catálogo (~2,7MB) pode estourar a cota do localStorage
+// no Safari iOS (limite ~5MB contado em UTF-16) ou ser recusado no modo privado.
+// Nesse caso os cards vivem só em memória e a página renderiza sem o reload.
+window.__cardsMem = window.__cardsMem || null;
+
+const loadCards = () => {
+  try {
+    const raw = localStorage.getItem("cards");
+    if (raw) return JSON.parse(raw);
+  } catch (e) {
+    // parse/leitura falhou — cai no fallback em memória.
+  }
+  return window.__cardsMem || [];
+};
+window.loadCards = loadCards;
+
+// Retorna true se conseguiu PERSISTIR (aí vale o reload). Se só coube em memória
+// retorna false e o chamador deve renderizar sem recarregar a página.
+const saveCards = (cards) => {
+  window.__cardsMem = cards;
+  try {
+    localStorage.setItem("cards", JSON.stringify(cards));
+    localStorage.setItem("lastModified", new Date().toISOString());
+    return true;
+  } catch (e) {
+    return false;
+  }
+};
+window.saveCards = saveCards;
+
 document.getElementById("menu-button")?.click();
 
 const cartToast = (text, ok = true) =>
@@ -42,7 +72,7 @@ const cartToast = (text, ok = true) =>
 
 // Seletor de quantidade no card (só aparece quando há mais de 1 disponível).
 const changeQty = (cardId, delta) => {
-  const cards = JSON.parse(localStorage.getItem("cards")) || [];
+  const cards = loadCards();
   const card = cards.find((c) => c.id == cardId);
   const max = parseInt(card?.qty) || 1;
   const el = document.getElementById("qtysel-" + cardId);
@@ -70,7 +100,7 @@ const addToCart = (cardId) => {
     }
   }
 
-  const cards = JSON.parse(localStorage.getItem("cards")) || [];
+  const cards = loadCards();
   const card = cards.find((c) => c.id == cardId);
   if (!card) return;
 
@@ -281,13 +311,27 @@ const separeteCards = async (category = null) => {
       }
     }
   }
-  localStorage.setItem("cards", JSON.stringify(cards));
-  localStorage.setItem("lastModified", new Date());
-  setFilters(true);
+  const persisted = saveCards(cards);
+
   if (loading) {
     loading.hidden = true;
   }
-  window.location.reload();
+
+  if (persisted) {
+    // Caminho normal: os dados ficaram no localStorage; recarrega para que todos
+    // os scripts (filtros, cart) leiam do cache já populado.
+    window.location.reload();
+  } else {
+    // Sem persistência (cota iOS/modo privado): não recarrega — os dados só
+    // existem em memória. Re-inicializa a página de estoque diretamente.
+    if (typeof window.initEstoquePage === "function") {
+      window.initEstoquePage();
+    } else if (typeof setFilters === "function") {
+      setFilters(true);
+    }
+    // Em páginas sem esses hooks (ex.: card/list), os dados já estão em
+    // window.__cardsMem e o script da página os lê via loadCards().
+  }
 
   return cards;
 };
