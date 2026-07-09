@@ -603,17 +603,17 @@ const setOrder = (order, field, cards) => {
   return cards.sort((a, b) => a[field] - b[field]);
 }
 
-// Home "Adicionadas Recentemente": a base NOVA não tem mais a coluna RAD/RA,
-// então mostramos as últimas N cartas da aba (as adicionadas por último).
-const RECENT_COUNT = 20;
+// "Adicionadas Recentemente": mostra só as cartas destacadas na planilha —
+// as que têm "RA" na coluna RA.
 const getRecentCards = () => {
   const cards = JSON.parse(localStorage.getItem('cards')) || [];
-  if (cards.length <= 0) {
+  const destaques = cards.filter((c) => (c.ra || '').toUpperCase() === 'RA');
+  if (destaques.length <= 0) {
     const href = document.getElementById('not-found-cards-href');
     if (href) href.style.display = 'block';
     return [];
   }
-  return cards.slice(-RECENT_COUNT).reverse();
+  return destaques;
 }
 
 const getColorsReference = (colors) => {
