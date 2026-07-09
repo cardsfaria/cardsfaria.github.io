@@ -226,6 +226,31 @@
   font-weight: 700;
   color: #9aa0aa;
 }
+/* Acabamento no meio da linha de compra (entre qtd e carrinho) */
+.badge-acab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: #f6e3b0;
+  color: #4a3a08;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+  max-width: 46%;
+}
+@media (max-width: 575.98px) {
+  .badge-acab {
+    font-size: 11px;
+    padding: 4px 8px;
+  }
+}
 
 .card-image-wrapper {
   width: 100%;
@@ -692,7 +717,18 @@ button[id^="cart-"] {
   /* Toolbar: busca ocupa a linha, ordenar + filtros dividem a segunda */
   .filter-search { flex: 1 1 100%; }
   .filter-order { flex: 1 1 auto; }
-  .filter-toggle { flex: 0 0 auto; }
+  /* No mobile o "Filtrar" dourado some; o "Filtros" assume o dourado (igual PC). */
+  .filter-toggle {
+    flex: 0 0 auto;
+    background: linear-gradient(180deg, var(--ff-gold-2), var(--ff-gold));
+    border-color: var(--ff-gold-2);
+    color: #231a05;
+    font-weight: 700;
+  }
+  .filter-toggle:hover {
+    background: linear-gradient(180deg, var(--ff-gold-2), var(--ff-gold));
+    border-color: var(--ff-gold-2);
+  }
 
   /* Painel vira gaveta deslizante de baixo */
   .filter-panel {

@@ -260,6 +260,15 @@ const getCondBadge = (condicao) => {
   return `<span class="badge-cond badge-cond--${cls}" title="Condição: ${cond}">${cond}</span>`;
 };
 
+// Acabamento (Foil, Promo-Foil, Borderless...) — chip mostrado na linha de compra.
+const getAcabBadge = (card) => {
+  const raw = (card.acabamento || card["FOIL?"] || "").trim();
+  if (!raw) return "";
+  // Title case preservando espaços e hífens: "promo-foil" -> "Promo-Foil".
+  const label = raw.toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
+  return `<span class="badge-acab" title="Acabamento: ${label}">${label}</span>`;
+};
+
 const getCardTemplate = (card) => {
   const avail = parseInt(card.qty) || 0;
   const stepper =
@@ -319,6 +328,7 @@ const getCardTemplate = (card) => {
 
     <div class="card-buy">
       ${stepper}
+      ${getAcabBadge(card)}
       <button
         type="button"
         class="btn btn-dark btn-floating"
