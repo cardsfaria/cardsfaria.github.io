@@ -835,7 +835,17 @@ const initEstoquePage = () => {
   // Só abre sozinho no desktop largo. Celular/tablet começam fechados.
   setFiltersOpen(window.innerWidth >= 992);
 
-  liveApply();
+  // Se os dados ainda não chegaram (1ª chamada antes do fetch), NÃO renderiza —
+  // senão apareceria "Nenhuma carta encontrada" por um instante. Mantém o
+  // "Carregando..." até separeteCards() recarregar (desktop) ou re-inicializar
+  // esta página com os dados em memória (fallback iOS).
+  if (loadCards().length > 0) {
+    liveApply();
+  } else {
+    if (notFoundText) notFoundText.hidden = true;
+    const loading = document.getElementById('loading');
+    if (loading) loading.hidden = false;
+  }
 };
 window.initEstoquePage = initEstoquePage;
 
