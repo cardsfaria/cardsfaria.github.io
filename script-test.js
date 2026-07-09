@@ -849,10 +849,25 @@ const initEstoquePage = () => {
 };
 window.initEstoquePage = initEstoquePage;
 
+// Renderiza a página "Adicionadas Recentemente" (só as cartas com "RA").
+const initRecentesPage = () => {
+  if (loadCards().length > 0) {
+    createDomCards(getRecentCards(), 'cardss', true);
+  } else {
+    // Dados ainda não chegaram: mantém "Carregando..." até separeteCards()
+    // recarregar (desktop) ou re-renderizar via window.renderCardsPage (iOS).
+    const loading = document.getElementById('loading');
+    if (loading) loading.hidden = false;
+  }
+};
+
+// separeteCards() chama window.renderCardsPage no fallback em memória (iOS),
+// então cada página registra AQUI a sua própria função de render.
 if(currentPath.includes('recentes')) {
-  // Página "Adicionadas Recentemente".
-  createDomCards(getRecentCards(), 'cardss', true);
+  window.renderCardsPage = initRecentesPage;
+  initRecentesPage();
 } else if(currentPath.includes('filtrar') || currentPath.includes('index') || !currentPath) {
   // Home (/) e /filtrar são a página de filtros/estoque.
+  window.renderCardsPage = initEstoquePage;
   initEstoquePage();
 }

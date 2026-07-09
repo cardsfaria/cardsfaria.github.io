@@ -324,8 +324,8 @@ const separeteCards = async (category = null) => {
   } else {
     // Sem persistência (cota iOS/modo privado): não recarrega — os dados só
     // existem em memória. Re-inicializa a página de estoque diretamente.
-    if (typeof window.initEstoquePage === "function") {
-      window.initEstoquePage();
+    if (typeof window.renderCardsPage === "function") {
+      window.renderCardsPage();
     } else if (typeof setFilters === "function") {
       setFilters(true);
     }
