@@ -657,10 +657,19 @@ const checkIfHasSelected = (array, key = '') => {
 const sumQty = (cards) =>
   (cards || []).reduce((acc, c) => acc + (parseInt(c.qty) || 0), 0);
 
-const updateResultCount = (n) => {
-  const label = `${n === 1 ? 'carta' : 'cartas'}`;
+// Valor total do estoque = soma da coluna "Total" da planilha.
+const sumTotal = (cards) =>
+  (cards || []).reduce((acc, c) => acc + (parseFloat(c.total) || 0), 0);
+
+const brl = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
+
+const updateResultCount = (cards) => {
+  const arr = cards || [];
+  const n = sumQty(arr);
+  const label = n === 1 ? 'carta' : 'cartas';
+  const valor = brl.format(sumTotal(arr));
   const el = document.getElementById('result-count');
-  if (el) el.innerHTML = `<b>${n}</b> ${label}`;
+  if (el) el.innerHTML = `<b>${n}</b> ${label} · <b>${valor}</b>`;
   const apply = document.getElementById('apply-count');
   if (apply) apply.textContent = `${n} ${label}`;
 };
@@ -745,7 +754,7 @@ const liveApply = () => {
     if (container) container.innerHTML = '';
     lastSlice = 0;
     Promise.resolve(setFilters(true)).then((cards) => {
-      updateResultCount(sumQty(cards));
+      updateResultCount(cards);
       renderActiveFilters();
     });
   }, 0);
