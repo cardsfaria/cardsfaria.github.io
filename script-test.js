@@ -719,6 +719,20 @@ const deselectValue = (id, val) => {
   if (el) [...el.options].forEach((o) => { if (o.value === val) o.selected = false; });
 };
 
+const selectValues = (id, vals) => {
+  if (!vals || !vals.length) return;
+  const ts =
+    id === 'colecao-select' ? tomColecao :
+    id === 'subtipo-select' ? tomSubtipo :
+    id === 'artista-select' ? tomArtista : null;
+  if (ts) {
+    ts.setValue(vals, true); // silent: não dispara re-render aqui
+    return;
+  }
+  const el = document.getElementById(id);
+  if (el) [...el.options].forEach((o) => { if (vals.includes(o.value)) o.selected = true; });
+};
+
 const renderActiveFilters = () => {
   const box = document.getElementById('active-filters');
   if (!box) return;
@@ -775,6 +789,98 @@ const renderActiveFilters = () => {
   });
 };
 
+// Há alguma seleção de filtro ativa (chips marcados, comboboxes ou busca)?
+const hasAnySelection = () => {
+  const anyChecked = [...document.querySelectorAll('#filters input.btn-check')].some(
+    (c) => c.checked
+  );
+  const anySelect = ['colecao-select', 'subtipo-select', 'artista-select'].some(
+    (id) => getSelectValues(id).length > 0
+  );
+  const searchVal = (document.getElementById('search')?.value || '').trim().length > 0;
+  return anyChecked || anySelect || searchVal;
+};
+
+// Atualiza a cor dos botões da toolbar AO VIVO conforme o usuário marca/desmarca
+// chips — mesmo sem aplicar. Assim, ao limpar os chips, "Filtrar" volta ao dourado
+// e "Filtros" ao neutro (sinaliza que dá pra filtrar de novo).
+const refreshFilterButtons = () => {
+  const active = hasAnySelection();
+  document.querySelectorAll('.filter-toggle, .filter-apply-top').forEach((b) => {
+    if (b) b.classList.toggle('is-active', active);
+  });
+};
+
+// ---- Preservar filtros + scroll ao abrir/voltar da tela de carta ----
+const saveListState = () => {
+  try {
+    const checked = [...document.querySelectorAll('#filters input.btn-check:checked')].map(
+      (c) => c.id
+    );
+    const state = {
+      checked,
+      colecao: getSelectValues('colecao-select'),
+      subtipo: getSelectValues('subtipo-select'),
+      artista: getSelectValues('artista-select'),
+      search: document.getElementById('search')?.value || '',
+      order: document.getElementById('order-select')?.value || '',
+      scrollY: window.scrollY || window.pageYOffset || 0,
+      lastSlice: lastSlice,
+    };
+    sessionStorage.setItem('listState', JSON.stringify(state));
+  } catch (e) {
+    // sessionStorage indisponível — segue sem preservar.
+  }
+};
+window.saveListState = saveListState;
+
+// Restaura o estado salvo (se houver). Retorna true se restaurou.
+const restoreListState = async () => {
+  let raw;
+  try {
+    raw = sessionStorage.getItem('listState');
+    if (raw) sessionStorage.removeItem('listState');
+  } catch (e) {
+    return false;
+  }
+  if (!raw) return false;
+
+  let st;
+  try {
+    st = JSON.parse(raw);
+  } catch (e) {
+    return false;
+  }
+  if (!st) return false;
+
+  (st.checked || []).forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) el.checked = true;
+  });
+  selectValues('colecao-select', st.colecao || []);
+  selectValues('subtipo-select', st.subtipo || []);
+  selectValues('artista-select', st.artista || []);
+  const s = document.getElementById('search');
+  if (s) s.value = st.search || '';
+  const o = document.getElementById('order-select');
+  if (o) o.value = st.order || '';
+
+  const cards = await Promise.resolve(setFilters(false));
+  const n = Math.max(9, st.lastSlice || 9);
+  const container = document.getElementById('cards-filter-row');
+  if (container) container.innerHTML = cards.slice(0, n).map(getCardTemplate).join('');
+  lastSlice = n;
+  updateResultCount(cards);
+  renderActiveFilters();
+  refreshFilterButtons();
+  const loading = document.getElementById('loading');
+  if (loading) loading.hidden = true;
+
+  // Restaura a rolagem depois do paint dos cards.
+  requestAnimationFrame(() => window.scrollTo(0, st.scrollY || 0));
+  return true;
+};
+
 // Coalesce vários eventos de mudança num único re-render.
 let liveApplyPending = false;
 const liveApply = () => {
@@ -812,6 +918,11 @@ const wireLiveFiltering = () => {
       deb = setTimeout(liveApply, 300);
     });
   }
+
+  // Marcar/desmarcar qualquer chip ou combobox atualiza a cor dos botões ao vivo
+  // (mesmo sem aplicar) — task: ao limpar filtros, botões voltam ao estado original.
+  const panel = document.getElementById('filters');
+  if (panel) panel.addEventListener('change', refreshFilterButtons);
 };
 
 // Monta os filtros a partir dos cards e renderiza. Fica global para que
@@ -840,7 +951,10 @@ const initEstoquePage = () => {
   // "Carregando..." até separeteCards() recarregar (desktop) ou re-inicializar
   // esta página com os dados em memória (fallback iOS).
   if (loadCards().length > 0) {
-    liveApply();
+    // Se voltou da tela de carta, restaura filtros + scroll; senão, render normal.
+    restoreListState().then((restored) => {
+      if (!restored) liveApply();
+    });
   } else {
     if (notFoundText) notFoundText.hidden = true;
     const loading = document.getElementById('loading');

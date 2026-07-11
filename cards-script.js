@@ -243,7 +243,11 @@ const getLangBadge = (idioma) => {
   const code = (idioma || "").toUpperCase().trim();
   if (!code) return "";
   const flag = LANG_FLAGS[code];
-  return `<span class="badge-lang" title="Idioma: ${code}">${
+  // Cor por idioma: PT azul, EN vermelho, demais cinza.
+  let cls = "other";
+  if (code === "PT" || code === "BR") cls = "pt";
+  else if (code === "EN") cls = "en";
+  return `<span class="badge-lang badge-lang--${cls}" title="Idioma: ${code}">${
     flag ? flag + " " : ""
   }${code}</span>`;
 };
@@ -286,11 +290,12 @@ const getCardTemplate = (card) => {
     <div class="card-info">
       <span>${card.name}</span>
     </div>
+    <div class="card-acab-row">${getAcabBadge(card)}</div>
     <div class="card-colecao">${card.colecao || ""}</div>
 
     <div class="card-image-wrapper shadow">
       <div style="cursor: pointer;" class="card-image w-100">
-        <a target="_blank" href="/card?urlCard=${card.id}">
+        <a href="/card?urlCard=${card.id}" onclick="if(window.saveListState)window.saveListState()">
           <img
             src="${
               card?.image
@@ -328,7 +333,6 @@ const getCardTemplate = (card) => {
 
     <div class="card-buy">
       ${stepper}
-      ${getAcabBadge(card)}
       <button
         type="button"
         class="btn btn-dark btn-floating"

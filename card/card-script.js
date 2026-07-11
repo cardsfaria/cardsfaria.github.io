@@ -35,7 +35,19 @@ const cardRares = {
   M: 'Mítica',
 }
 
+const goBack = () => {
+  // Volta pra lista preservando filtros + scroll (salvos em sessionStorage).
+  if (window.history.length > 1) {
+    window.history.back();
+  } else {
+    window.location.href = '/';
+  }
+};
+
 const cardContainerTemplate = (card) => `
+<button type="button" class="btn btn-dark mb-3" onclick="goBack()">
+  <i class="fa-solid fa-arrow-left"></i> Voltar
+</button>
 <div class="row">
     <div class="col-md-4">
       <div class="card-image2 w-100">
@@ -67,6 +79,10 @@ const cardContainerTemplate = (card) => `
       <div class="mt-2" style="font-size: 17px">
         <strong style="opacity: 75%;">Coleção: </strong>
         <span>${card.colecao || '-'}</span>
+      </div>
+      <div class="mt-2" style="font-size: 17px">
+        <strong style="opacity: 75%;">Acabamento: </strong>
+        <span>${card.acabamento || card['FOIL?'] || '-'}</span>
       </div>
       <div class="mt-2" style="font-size: 17px">
         <strong style="opacity: 75%;">Artista: </strong>

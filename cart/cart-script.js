@@ -74,7 +74,9 @@ const renderCart = (cartParam = []) => {
   cartArray.forEach((item) => {
     const tr = document.createElement("tr");
     tr.innerHTML = `
-      <td>${item.name}</td>
+      <td><span class="cart-card-name" data-img="${item.image || ""}">${
+      item.name
+    }</span></td>
       <td>${item.searchCode || "-"}</td>
       <td>${item.colecao || "-"}</td>
       <td>${item.idioma || "-"}</td>
@@ -263,5 +265,58 @@ const renderTotalText = () => {
     document.getElementById("send-whatsapp").style.display = "block";
   }
 };
+
+// ---- Popover com a foto da carta ao passar o mouse / clicar no nome ----
+const cardPopover = (() => {
+  const el = document.createElement("div");
+  el.className = "cart-popover";
+  el.style.display = "none";
+  el.innerHTML = `<img alt="" />`;
+  document.body.appendChild(el);
+  return el;
+})();
+
+const showCardPopover = (target) => {
+  const url = target.getAttribute("data-img");
+  if (!url) return;
+  const img = cardPopover.querySelector("img");
+  img.src = url;
+  cardPopover.style.display = "block";
+
+  const r = target.getBoundingClientRect();
+  const pw = 240;
+  const ph = 336;
+  // Abre à direita do nome; se não couber, à esquerda. Prende na viewport.
+  let left = r.right + 12;
+  if (left + pw > window.innerWidth - 8) left = r.left - pw - 12;
+  if (left < 8) left = 8;
+  let top = r.top + window.scrollY - ph / 2 + r.height / 2;
+  const minTop = window.scrollY + 8;
+  const maxTop = window.scrollY + window.innerHeight - ph - 8;
+  top = Math.max(minTop, Math.min(top, maxTop));
+  cardPopover.style.left = left + "px";
+  cardPopover.style.top = top + "px";
+};
+
+const hideCardPopover = () => {
+  cardPopover.style.display = "none";
+};
+
+// Delegação: funciona mesmo após re-render da tabela.
+tbody.addEventListener("mouseover", (e) => {
+  const name = e.target.closest(".cart-card-name");
+  if (name) showCardPopover(name);
+});
+tbody.addEventListener("mouseout", (e) => {
+  const name = e.target.closest(".cart-card-name");
+  if (name) hideCardPopover();
+});
+// Toque/clique (mobile): alterna o popover.
+tbody.addEventListener("click", (e) => {
+  const name = e.target.closest(".cart-card-name");
+  if (!name) return;
+  if (cardPopover.style.display === "block") hideCardPopover();
+  else showCardPopover(name);
+});
 
 renderCart();

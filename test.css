@@ -163,6 +163,17 @@
   color: #1f2430;
   border: 1px solid rgba(0, 0, 0, 0.08);
 }
+/* Cor por idioma: PT azul, EN vermelho, demais cinza (default acima). */
+.badge-lang--pt {
+  background: #2563eb;
+  color: #fff;
+  border-color: rgba(0, 0, 0, 0.12);
+}
+.badge-lang--en {
+  background: #dc2626;
+  color: #fff;
+  border-color: rgba(0, 0, 0, 0.12);
+}
 .badge-cond {
   color: #fff;
 }
@@ -226,29 +237,35 @@
   font-weight: 700;
   color: #9aa0aa;
 }
-/* Acabamento no meio da linha de compra (entre qtd e carrinho) */
+/* Acabamento: chip centralizado entre o nome e a edição da carta.
+   Altura fixa (reserva espaço mesmo sem acabamento) p/ as imagens continuarem
+   alinhadas entre os cards da mesma linha. */
+.card-acab-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 24px;
+  margin: 2px 0 2px;
+}
 .badge-acab {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  text-align: center;
   font-size: 12px;
   font-weight: 700;
-  line-height: 1;
-  padding: 5px 10px;
+  line-height: 1.15;
+  padding: 4px 12px;
   border-radius: 999px;
   background: #f6e3b0;
   color: #4a3a08;
   border: 1px solid rgba(0, 0, 0, 0.1);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  min-width: 0;
-  max-width: 46%;
+  max-width: 90%;
 }
 @media (max-width: 575.98px) {
   .badge-acab {
     font-size: 11px;
-    padding: 4px 8px;
+    padding: 4px 10px;
   }
 }
 
@@ -806,4 +823,31 @@ button[id^="cart-"] {
   .card-qty { font-size: 14px; }
   .card-info2 { font-size: 12px; }
   button[id^="cart-"] { width: 34px; height: 34px; font-size: 14px; }
+}
+
+/* ---- Carrinho: nome da carta com popover da foto ---- */
+.cart-card-name {
+  cursor: pointer;
+  text-decoration: underline dotted rgba(255, 255, 255, 0.4);
+  text-underline-offset: 3px;
+}
+.cart-card-name:hover {
+  color: var(--ff-gold, #e7b64b);
+}
+.cart-popover {
+  position: absolute;
+  z-index: 2000;
+  width: 240px;
+  padding: 6px;
+  background: #0e0e10;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  box-shadow: 0 12px 34px -8px rgba(0, 0, 0, 0.8);
+  pointer-events: none;
+}
+.cart-popover img {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 8px;
 }
