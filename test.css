@@ -238,14 +238,12 @@
   color: #9aa0aa;
 }
 /* Acabamento: chip centralizado entre o nome e a edição da carta.
-   Altura fixa (reserva espaço mesmo sem acabamento) p/ as imagens continuarem
-   alinhadas entre os cards da mesma linha. */
+   Só aparece quando há acabamento; bem justo pra não afastar os detalhes da foto. */
 .card-acab-row {
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 24px;
-  margin: 2px 0 2px;
+  margin: 0 0 2px;
 }
 .badge-acab {
   display: inline-flex;

@@ -290,7 +290,11 @@ const getCardTemplate = (card) => {
     <div class="card-info">
       <span>${card.name}</span>
     </div>
-    <div class="card-acab-row">${getAcabBadge(card)}</div>
+    ${
+      getAcabBadge(card)
+        ? `<div class="card-acab-row">${getAcabBadge(card)}</div>`
+        : ""
+    }
     <div class="card-colecao">${card.colecao || ""}</div>
 
     <div class="card-image-wrapper shadow">
