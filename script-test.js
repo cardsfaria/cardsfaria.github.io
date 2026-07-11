@@ -55,7 +55,8 @@ const getFiltersTemplate = (color) =>`
   `
 
   const cmcs = [
-    {id: '01', name: '0-1', cmc: [0, 1]},
+    {id: '0', name: '0', cmc: 0},
+    {id: '1', name: '1', cmc: 1},
     {id: '2', name: '2', cmc: 2},
     {id: '3', name: '3', cmc: 3},
     {id: '4', name: '4', cmc: 4},
@@ -472,7 +473,8 @@ const checkIfCardHasCMC = (card) => {
 
 const cmcFilterRow = (cards) => {
   
-  const cmc01 = document.getElementById('cmc-01').checked;
+  const cmc0 = document.getElementById('cmc-0').checked;
+  const cmc1 = document.getElementById('cmc-1').checked;
   const cmc2 = document.getElementById('cmc-2').checked;
   const cmc3 = document.getElementById('cmc-3').checked;
   const cmc4 = document.getElementById('cmc-4').checked;
@@ -480,7 +482,8 @@ const cmcFilterRow = (cards) => {
   const cmc6 = document.getElementById('cmc-6').checked;
 
   const cmcs = {
-    cmc01,
+    cmc0,
+    cmc1,
     cmc2,
     cmc3,
     cmc4,
@@ -493,7 +496,8 @@ const cmcFilterRow = (cards) => {
   }
 
   const cmcFilter = {
-    'cmc01': (card) => parseInt(card['Custo']) == 0 || parseInt(card['Custo']) == 1,
+    'cmc0': (card) => parseInt(card['Custo']) == 0,
+    'cmc1': (card) => parseInt(card['Custo']) == 1,
     'cmc2': (card) => parseInt(card['Custo']) == 2,
     'cmc3': (card) => parseInt(card['Custo']) == 3,
     'cmc4': (card) => parseInt(card['Custo']) == 4,
