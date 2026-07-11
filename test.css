@@ -306,11 +306,11 @@ button[id^="cart-"] {
   border-radius: 50%;
 }
 
-/* Título do card com altura fixa (2 linhas) para as imagens SEMPRE alinharem
-   entre os cards da mesma linha, mesmo com nomes de tamanhos diferentes (item 9). */
+/* Título do card: limita a 2 linhas (nomes longos não estouram), mas SEM altura
+   fixa — nomes de 1 linha ficam justos e o acabamento/edição colam no nome. */
 .card > .card-info:first-child {
   line-height: 1.35;
-  height: 2.7em; /* exatamente 2 linhas -> imagens sempre no mesmo Y */
+  max-height: 2.7em; /* teto de 2 linhas; nomes curtos ocupam só 1 */
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
