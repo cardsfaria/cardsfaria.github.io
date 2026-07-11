@@ -4,14 +4,15 @@ const { urlCard } = Object.fromEntries(urlSearchParams.entries());
 if(!urlCard) {
   window.location.href = '/';
 }
-const cards = typeof loadCards === 'function'
-  ? loadCards()
-  : (JSON.parse(localStorage.getItem('cards')) || []);
-const card  = cards.find(card => card.id === parseInt(urlCard));
+
+const getCardsSafe = () =>
+  typeof loadCards === 'function'
+    ? loadCards()
+    : (JSON.parse(localStorage.getItem('cards')) || []);
 
 const getColorsTemplate = (colors) => {
   let template = '';
-  colors.forEach((color) => {
+  (colors || []).forEach((color) => {
     template += `<abbr class="mtg-symbol mtg-symbol-${color}" style="width: 14px; height: 14px;"></abbr>`;
   });
   return template;
@@ -111,6 +112,7 @@ const cardContainerTemplate = (card) => `
           onclick="addToCart('${card.id}')"
         >
         <i class="fa-solid fa-cart-shopping"></i>
+        </button>
       </div>
       <div class="position-absolute bottom-0">
         <span>Compare o preço na <a target="_blank" href="https://www.ligamagic.com.br/?view=cards/card&card=${card.name}">liga magic</a></span>
@@ -121,5 +123,35 @@ const cardContainerTemplate = (card) => `
   `;
 
 
-const cardContainer = document.getElementById('card-container');
-cardContainer.innerHTML = cardContainerTemplate(card);
+// Renderiza a carta. Como os dados podem chegar de forma ASSÍNCRONA (IndexedDB
+// no iOS, ou fetch se não houver cache), esta função é chamada tanto agora quanto
+// pelo boot do cards-script (window.renderCardsPage) assim que os cards estiverem
+// prontos — evita a "página em branco" quando loadCards() ainda está vazio.
+const renderCardDetail = () => {
+  const cardContainer = document.getElementById('card-container');
+  if (!cardContainer) return;
+
+  const cards = getCardsSafe();
+  const card = cards.find((c) => c.id === parseInt(urlCard));
+
+  if (!card) {
+    if (cards.length === 0) {
+      // Dados ainda não chegaram — mostra "carregando" (o boot re-renderiza).
+      cardContainer.innerHTML =
+        '<div class="text-center py-5">Carregando carta…</div>';
+    } else {
+      // Dados prontos, mas o id não existe.
+      cardContainer.innerHTML =
+        '<button type="button" class="btn btn-dark mb-3" onclick="goBack()">' +
+        '<i class="fa-solid fa-arrow-left"></i> Voltar</button>' +
+        '<div class="text-center py-4">Carta não encontrada.</div>';
+    }
+    return;
+  }
+
+  cardContainer.innerHTML = cardContainerTemplate(card);
+};
+
+// O boot do cards-script chama isto quando os cards ficam prontos.
+window.renderCardsPage = renderCardDetail;
+renderCardDetail();
