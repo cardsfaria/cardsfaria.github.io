@@ -408,61 +408,63 @@ button[id^="cart-"] {
   min-width: 150px;
 }
 .filter-order:focus { border-color: var(--ff-gold); box-shadow: 0 0 0 3px var(--ff-gold-soft); }
+/* SEM filtros: "Filtros/Esconder" dourado (ação em destaque = abrir o painel). */
 .filter-toggle {
   display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: linear-gradient(180deg, var(--ff-gold-2), var(--ff-gold));
+  border: 1px solid var(--ff-gold-2);
+  color: #231a05;
+  font-weight: 700;
+  border-radius: 14px;
+  padding: 0.8rem 1.1rem;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, filter 0.15s;
+}
+.filter-toggle:hover { filter: brightness(1.05); }
+
+/* SEM filtros: "Filtrar" neutro. */
+.filter-apply-top {
+  display: inline-flex;
   align-items: center;
   gap: 0.5rem;
   background: var(--ff-panel);
   border: 1px solid var(--ff-border);
   color: var(--ff-text);
-  border-radius: 14px;
-  padding: 0.8rem 1.1rem;
-  cursor: pointer;
-  transition: background 0.2s, border-color 0.2s;
-}
-.filter-toggle:hover { border-color: var(--ff-border-strong); background: var(--ff-panel-2); }
-
-/* Botão "Filtrar" no topo (toolbar) — acesso fácil sem rolar até o fim do painel */
-.filter-apply-top {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  background: linear-gradient(180deg, var(--ff-gold-2), var(--ff-gold));
-  border: none;
-  color: #231a05;
-  font-weight: 700;
+  font-weight: 600;
   border-radius: 14px;
   padding: 0.8rem 1.2rem;
   cursor: pointer;
   white-space: nowrap;
-  box-shadow: 0 4px 14px -4px rgba(231, 182, 75, 0.5);
-  transition: filter 0.15s;
+  transition: background 0.15s, border-color 0.2s, filter 0.15s;
 }
-.filter-apply-top:hover { filter: brightness(1.05); }
+.filter-apply-top:hover { border-color: var(--ff-border-strong); background: var(--ff-panel-2); }
 @media (max-width: 767px) {
   /* no mobile a gaveta já tem o "Ver resultados" */
   .filter-apply-top { display: none; }
 }
 
-/* Filtro ativo: TROCA as cores entre "Filtros" e "Filtrar" (sem glow).
-   Filtros fica dourado (chama atenção) e Filtrar fica neutro (preto/branco). */
+/* COM filtro selecionado: TROCA — "Filtrar" fica dourado e "Filtros" neutro. */
 .filter-toggle.is-active {
-  background: linear-gradient(180deg, var(--ff-gold-2), var(--ff-gold));
-  border-color: var(--ff-gold-2);
-  color: #231a05;
-  font-weight: 700;
-}
-.filter-toggle.is-active:hover {
-  background: linear-gradient(180deg, var(--ff-gold-2), var(--ff-gold));
-}
-.filter-apply-top.is-active {
   background: var(--ff-panel);
+  border-color: var(--ff-border);
   color: var(--ff-text);
-  border: 1px solid var(--ff-border);
-  box-shadow: none;
   font-weight: 600;
 }
-.filter-apply-top.is-active:hover { filter: none; background: var(--ff-panel-2); }
+.filter-toggle.is-active:hover {
+  background: var(--ff-panel-2);
+  border-color: var(--ff-border-strong);
+  filter: none;
+}
+.filter-apply-top.is-active {
+  background: linear-gradient(180deg, var(--ff-gold-2), var(--ff-gold));
+  border: none;
+  color: #231a05;
+  font-weight: 700;
+  box-shadow: 0 4px 14px -4px rgba(231, 182, 75, 0.5);
+}
+.filter-apply-top.is-active:hover { filter: brightness(1.05); background: linear-gradient(180deg, var(--ff-gold-2), var(--ff-gold)); }
 
 /* ---- Painel em grid (visível só quando .is-open) ---- */
 .filter-panel {
@@ -734,15 +736,18 @@ button[id^="cart-"] {
   /* Toolbar: busca ocupa a linha, ordenar + filtros dividem a segunda */
   .filter-search { flex: 1 1 100%; }
   .filter-order { flex: 1 1 auto; }
-  /* No mobile o "Filtrar" dourado some; o "Filtros" assume o dourado (igual PC). */
-  .filter-toggle {
+  /* No mobile o "Filtrar" dourado some; o "Filtros" fica dourado SEMPRE (mesmo
+     com filtro ativo), pois é o único botão da toolbar. */
+  .filter-toggle,
+  .filter-toggle.is-active {
     flex: 0 0 auto;
     background: linear-gradient(180deg, var(--ff-gold-2), var(--ff-gold));
-    border-color: var(--ff-gold-2);
+    border: 1px solid var(--ff-gold-2);
     color: #231a05;
     font-weight: 700;
   }
-  .filter-toggle:hover {
+  .filter-toggle:hover,
+  .filter-toggle.is-active:hover {
     background: linear-gradient(180deg, var(--ff-gold-2), var(--ff-gold));
     border-color: var(--ff-gold-2);
   }
