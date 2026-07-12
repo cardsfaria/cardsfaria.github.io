@@ -287,14 +287,10 @@ const getCardTemplate = (card) => {
   return `
 <div class="col-6 col-lg-4">
   <div class="card position-relative">
-    <div class="card-info">
+    <div class="card-info card-title">
       <span>${card.name}</span>
     </div>
-    ${
-      getAcabBadge(card)
-        ? `<div class="card-acab-row">${getAcabBadge(card)}</div>`
-        : ""
-    }
+    <div class="card-acab-row">${getAcabBadge(card)}</div>
     <div class="card-colecao">${card.colecao || ""}</div>
 
     <div class="card-image-wrapper shadow">
@@ -317,23 +313,15 @@ const getCardTemplate = (card) => {
       <span>${formatter.format(card.price || 0)}</span>
     </div>
 
-    ${
-      getLangBadge(card.idioma) || getCondBadge(card.condicao)
-        ? `<div class="card-meta">${getLangBadge(card.idioma)}${getCondBadge(
-            card.condicao
-          )}</div>`
-        : ""
-    }
+    <div class="card-meta">${getLangBadge(card.idioma)}${getCondBadge(
+    card.condicao
+  )}</div>
 
     <div class="card-stock">${avail} ${
     avail === 1 ? "disponível" : "disponíveis"
   }</div>
 
-    ${
-      card.additionalInfo
-        ? `<span class="card-info2 text-danger">${card.additionalInfo}</span>`
-        : ""
-    }
+    <span class="card-info2 text-danger">${card.additionalInfo || ""}</span>
 
     <div class="card-buy">
       ${stepper}

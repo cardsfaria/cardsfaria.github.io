@@ -118,10 +118,18 @@
   font-weight: 700;
 }
 
+/* "Extra" (info adicional/condição em texto): altura reservada de 2 linhas
+   (sempre presente, vazio quando não há) para os campos alinharem entre cards. */
 .card-info2 {
-  display: block;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
   text-align: center;
-  font-size: 16px;
+  font-size: 15px;
+  line-height: 1.25;
+  height: 2.5em; /* 2 linhas fixas */
   margin-top: 4px;
 }
 
@@ -142,6 +150,7 @@
   flex-wrap: wrap;
   gap: 8px;
   margin: 6px 0 2px;
+  min-height: 30px; /* reserva a linha de badges mesmo sem idioma/condição */
 }
 .card-meta > span:empty {
   display: none;
@@ -237,12 +246,13 @@
   font-weight: 700;
   color: #9aa0aa;
 }
-/* Acabamento: chip centralizado entre o nome e a edição da carta.
-   Só aparece quando há acabamento; bem justo pra não afastar os detalhes da foto. */
+/* Acabamento: chip centralizado entre o nome e a edição. Altura SEMPRE reservada
+   (mesmo sem acabamento) para as imagens e os campos alinharem entre os cards. */
 .card-acab-row {
   display: flex;
   justify-content: center;
   align-items: center;
+  height: 26px; /* reserva 1 linha de chip, com ou sem acabamento */
   margin: 0 0 2px;
 }
 .badge-acab {
@@ -252,18 +262,21 @@
   text-align: center;
   font-size: 12px;
   font-weight: 700;
-  line-height: 1.15;
+  line-height: 1;
   padding: 4px 12px;
   border-radius: 999px;
   background: #f6e3b0;
   color: #4a3a08;
   border: 1px solid rgba(0, 0, 0, 0.1);
-  max-width: 90%;
+  max-width: 96%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 @media (max-width: 575.98px) {
   .badge-acab {
-    font-size: 11px;
-    padding: 4px 10px;
+    font-size: 10.5px;
+    padding: 4px 9px;
   }
 }
 
@@ -306,11 +319,11 @@ button[id^="cart-"] {
   border-radius: 50%;
 }
 
-/* Título do card: limita a 2 linhas (nomes longos não estouram), mas SEM altura
-   fixa — nomes de 1 linha ficam justos e o acabamento/edição colam no nome. */
+/* Título do card: altura FIXA de 2 linhas. Como o nome pode quebrar em 2 linhas,
+   reservamos sempre 2 — assim todos os campos (e a imagem) alinham entre os cards. */
 .card > .card-info:first-child {
   line-height: 1.35;
-  max-height: 2.7em; /* teto de 2 linhas; nomes curtos ocupam só 1 */
+  height: 2.7em; /* sempre 2 linhas -> imagens e demais campos alinhados */
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
