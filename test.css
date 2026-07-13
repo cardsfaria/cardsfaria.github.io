@@ -118,18 +118,10 @@
   font-weight: 700;
 }
 
-/* "Extra" (info adicional/condição em texto): altura reservada de 2 linhas
-   (sempre presente, vazio quando não há) para os campos alinharem entre cards. */
 .card-info2 {
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
-  overflow: hidden;
+  display: block;
   text-align: center;
-  font-size: 15px;
-  line-height: 1.25;
-  height: 2.5em; /* 2 linhas fixas */
+  font-size: 16px;
   margin-top: 4px;
 }
 
@@ -150,7 +142,6 @@
   flex-wrap: wrap;
   gap: 8px;
   margin: 6px 0 2px;
-  min-height: 30px; /* reserva a linha de badges mesmo sem idioma/condição */
 }
 .card-meta > span:empty {
   display: none;
@@ -319,16 +310,13 @@ button[id^="cart-"] {
   border-radius: 50%;
 }
 
-/* Título do card: altura FIXA de 2 linhas. Como o nome pode quebrar em 2 linhas,
-   reservamos sempre 2 — assim todos os campos (e a imagem) alinham entre os cards. */
+/* Título do card: SEMPRE 1 linha. Se o nome for grande, corta com reticências
+   (não quebra) — assim a altura é sempre igual e as imagens alinham entre os cards. */
 .card > .card-info:first-child {
   line-height: 1.35;
-  height: 2.7em; /* sempre 2 linhas -> imagens e demais campos alinhados */
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
+  white-space: nowrap;
   overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* Telefone/tablet com cards em 2 colunas (inclui paisagem): carrinho e textos menores. */

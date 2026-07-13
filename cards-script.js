@@ -313,15 +313,23 @@ const getCardTemplate = (card) => {
       <span>${formatter.format(card.price || 0)}</span>
     </div>
 
-    <div class="card-meta">${getLangBadge(card.idioma)}${getCondBadge(
-    card.condicao
-  )}</div>
+    ${
+      getLangBadge(card.idioma) || getCondBadge(card.condicao)
+        ? `<div class="card-meta">${getLangBadge(card.idioma)}${getCondBadge(
+            card.condicao
+          )}</div>`
+        : ""
+    }
 
     <div class="card-stock">${avail} ${
     avail === 1 ? "disponível" : "disponíveis"
   }</div>
 
-    <span class="card-info2 text-danger">${card.additionalInfo || ""}</span>
+    ${
+      card.additionalInfo
+        ? `<span class="card-info2 text-danger">${card.additionalInfo}</span>`
+        : ""
+    }
 
     <div class="card-buy">
       ${stepper}
