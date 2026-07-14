@@ -22,6 +22,8 @@ let isFilterOpen = false;
 const setFiltersOpen = (open) => {
   isFilterOpen = open;
   if (filters) filters.classList.toggle('is-open', open);
+  // Botão "Filtros": amarelo quando FECHADO, cinza quando ABERTO.
+  if (showFilterButton) showFilterButton.classList.toggle('is-open', open);
   const backdrop = document.getElementById('filter-backdrop');
   if (backdrop) backdrop.classList.toggle('is-open', open);
   document.body.classList.toggle('filters-locked', open && window.innerWidth < 768);
