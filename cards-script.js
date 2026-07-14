@@ -233,23 +233,43 @@ const gotoPage = (page) => {
   window.location.href = page;
 };
 
-const LANG_FLAGS = {
-  PT: "🇧🇷", BR: "🇧🇷", EN: "🇺🇸", ES: "🇪🇸", SP: "🇪🇸",
-  JP: "🇯🇵", JA: "🇯🇵", FR: "🇫🇷", DE: "🇩🇪", IT: "🇮🇹",
-  RU: "🇷🇺", KR: "🇰🇷", KO: "🇰🇷", CN: "🇨🇳", ZH: "🇨🇳"
+// Idioma -> país da bandeira. (Emoji de bandeira não renderiza no Windows/desktop,
+// por isso usamos SVG inline abaixo, que funciona igual em qualquer sistema.)
+const LANG_TO_FLAG = {
+  EN: "US", PT: "BR", BR: "BR", ES: "ES", SP: "ES",
+  JP: "JP", JA: "JP", FR: "FR", DE: "DE", IT: "IT",
+  RU: "RU", KR: "KR", KO: "KR", CN: "CN", ZH: "CN", CH: "CN",
+};
+
+// Bandeirinhas em SVG (viewBox 24x16). Simples, mas reconhecíveis.
+const FLAG_SVG = {
+  US: '<svg viewBox="0 0 24 16"><rect width="24" height="16" fill="#fff"/><g fill="#b22234"><rect width="24" height="2.46"/><rect y="4.92" width="24" height="2.46"/><rect y="9.85" width="24" height="2.46"/><rect y="13.54" width="24" height="2.46"/></g><rect width="10" height="8.6" fill="#3c3b6e"/></svg>',
+  BR: '<svg viewBox="0 0 24 16"><rect width="24" height="16" fill="#009b3a"/><path d="M12 2 22 8 12 14 2 8Z" fill="#fedf00"/><circle cx="12" cy="8" r="3.2" fill="#002776"/></svg>',
+  ES: '<svg viewBox="0 0 24 16"><rect width="24" height="16" fill="#c60b1e"/><rect y="4" width="24" height="8" fill="#ffc400"/></svg>',
+  JP: '<svg viewBox="0 0 24 16"><rect width="24" height="16" fill="#fff"/><circle cx="12" cy="8" r="4.5" fill="#bc002d"/></svg>',
+  FR: '<svg viewBox="0 0 24 16"><rect width="24" height="16" fill="#fff"/><rect width="8" height="16" fill="#0055a4"/><rect x="16" width="8" height="16" fill="#ef4135"/></svg>',
+  DE: '<svg viewBox="0 0 24 16"><rect width="24" height="16" fill="#000"/><rect y="5.33" width="24" height="5.33" fill="#dd0000"/><rect y="10.66" width="24" height="5.34" fill="#ffce00"/></svg>',
+  IT: '<svg viewBox="0 0 24 16"><rect width="24" height="16" fill="#fff"/><rect width="8" height="16" fill="#009246"/><rect x="16" width="8" height="16" fill="#ce2b37"/></svg>',
+  RU: '<svg viewBox="0 0 24 16"><rect width="24" height="16" fill="#fff"/><rect y="5.33" width="24" height="5.33" fill="#0039a6"/><rect y="10.66" width="24" height="5.34" fill="#d52b1e"/></svg>',
+  KR: '<svg viewBox="0 0 24 16"><rect width="24" height="16" fill="#fff"/><circle cx="12" cy="8" r="4.5" fill="#0047a0"/><path d="M7.5 8a4.5 4.5 0 0 1 9 0Z" fill="#cd2e3a"/></svg>',
+  CN: '<svg viewBox="0 0 24 16"><rect width="24" height="16" fill="#de2910"/><text x="3.5" y="11.5" font-size="10" fill="#ffde00">★</text></svg>',
+};
+
+const flagFor = (code) => {
+  const svg = FLAG_SVG[LANG_TO_FLAG[code]];
+  return svg ? `<span class="flag-ic">${svg}</span>` : "";
 };
 
 const getLangBadge = (idioma) => {
   const code = (idioma || "").toUpperCase().trim();
   if (!code) return "";
-  const flag = LANG_FLAGS[code];
   // Cor por idioma: PT azul, EN vermelho, demais cinza.
   let cls = "other";
   if (code === "PT" || code === "BR") cls = "pt";
   else if (code === "EN") cls = "en";
-  return `<span class="badge-lang badge-lang--${cls}" title="Idioma: ${code}">${
-    flag ? flag + " " : ""
-  }${code}</span>`;
+  return `<span class="badge-lang badge-lang--${cls}" title="Idioma: ${code}">${flagFor(
+    code
+  )}${code}</span>`;
 };
 
 const getCondBadge = (condicao) => {

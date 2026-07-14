@@ -163,6 +163,18 @@
   color: #1f2430;
   border: 1px solid rgba(0, 0, 0, 0.08);
 }
+/* Bandeirinha em SVG (renderiza em qualquer OS, ao contrário do emoji no Windows) */
+.flag-ic {
+  display: inline-flex;
+  flex: 0 0 auto;
+}
+.flag-ic svg {
+  width: 20px;
+  height: 13px;
+  display: block;
+  border-radius: 2px;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.18);
+}
 /* Cor por idioma: PT azul, EN vermelho, demais cinza (default acima). */
 .badge-lang--pt {
   background: #2563eb;
