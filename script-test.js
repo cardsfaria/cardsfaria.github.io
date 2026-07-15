@@ -303,6 +303,12 @@ const createFilter = () => {
   colors.forEach(color => {
     colorFilters.innerHTML += getFiltersTemplate(color);
   });
+  // Chip extra: "Multicoloridas". Sozinho = cartas com +1 cor. Combinado com
+  // cores específicas = cartas com EXATAMENTE aquelas cores.
+  colorFilters.innerHTML += `
+  <input class="btn-check" onchange="handleChangedColors()" type="checkbox" id="multicolor" autocomplete="off" />
+  <label class="btn filter-chip" for="multicolor"><span class="mana-dot mana-multi"></span>Multicoloridas</label>
+  `;
 }
 
 const createCMCFilter = () => {
@@ -344,6 +350,8 @@ const resetItem = (array, key) => {
 
 const resetFilter = () => {
   resetItem(colors, '');
+  const mc = document.getElementById('multicolor');
+  if (mc) mc.checked = false;
   resetItem(cmcs, 'cmc-');
   resetItem(types, 'type-');
   resetItem(rarities, 'rare-');
@@ -382,7 +390,7 @@ const setFilters = async (setInHtml = false) => {
 
   notFoundText.hidden = true;
 
-  if(checkIfHasSelected(colors, '')) {
+  if(checkIfHasSelected(colors, '') || document.getElementById('multicolor')?.checked) {
     cards = cardsFilterRow(cards);
 
   }
@@ -436,6 +444,12 @@ const setFilters = async (setInHtml = false) => {
   return cards;
 }
 
+// As 5 cores de Magic (letras usadas na coluna "cor"). C (incolor) e T (token)
+// não contam como cor.
+const COLOR_LETTERS = ['W', 'U', 'B', 'R', 'G'];
+const cardColorSet = (card) =>
+  (card.category || []).filter((c) => COLOR_LETTERS.includes(c));
+
 const cardsFilterRow = (cards) => {
   const selected = {
     red: document.getElementById('red')?.checked,
@@ -447,6 +461,23 @@ const cardsFilterRow = (cards) => {
   };
 
   const colorsReference = getColorsReference(selected);
+  const multi = document.getElementById('multicolor')?.checked;
+
+  if (multi) {
+    if (colorsReference.length <= 0) {
+      // Só "Multicoloridas": todas as cartas com MAIS DE UMA cor.
+      return cards.filter((card) => cardColorSet(card).length > 1);
+    }
+    // "Multicoloridas" + cores específicas: cartas com EXATAMENTE essas cores.
+    return cards.filter((card) => {
+      const cc = cardColorSet(card);
+      return (
+        cc.length === colorsReference.length &&
+        cc.every((x) => colorsReference.includes(x))
+      );
+    });
+  }
+
   if (colorsReference.length <= 0) {
     return cards;
   }
@@ -751,6 +782,8 @@ const renderActiveFilters = () => {
     });
 
   pushChecked(colors, '', (c) => c.name);
+  const mc = document.getElementById('multicolor');
+  if (mc && mc.checked) tags.push({ label: 'Multicoloridas', clear: () => (mc.checked = false) });
   pushChecked(cmcs, 'cmc-', (c) => 'Custo ' + c.name);
   pushChecked(rarities, 'rare-', (r) => r.name);
   pushChecked(types, 'type-', (t) => t.name);

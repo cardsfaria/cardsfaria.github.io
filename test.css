@@ -586,6 +586,8 @@ button[id^="cart-"] {
 .mana-green { background: #2f9e5f; }
 .mana-colorless { background: #c2c2c2; }
 .mana-foil { background: conic-gradient(from 0deg, #ff66aa, #ffdd66, #66ff99, #66ccff, #cc99ff, #ff66aa); }
+/* Multicoloridas: as 5 cores de Magic (W/U/B/R/G) */
+.mana-multi { background: conic-gradient(from 0deg, #efe9d2, #2a7fc0, #4b4b52, #d3542f, #2f9e5f, #efe9d2); }
 
 /* ---- Footer (contador + limpar) ---- */
 .filter-footer {
