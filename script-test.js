@@ -22,7 +22,8 @@ let isFilterOpen = false;
 const setFiltersOpen = (open) => {
   isFilterOpen = open;
   if (filters) filters.classList.toggle('is-open', open);
-  // Botão "Filtros": amarelo quando FECHADO, cinza quando ABERTO.
+  // A cor do botão não depende mais de aberto/fechado, e sim de haver filtro
+  // aplicado (ver setToolbarButtons). O .is-open segue marcando só o estado.
   if (showFilterButton) showFilterButton.classList.toggle('is-open', open);
   const backdrop = document.getElementById('filter-backdrop');
   if (backdrop) backdrop.classList.toggle('is-open', open);
@@ -49,7 +50,7 @@ const handleChangedCMC = () => changedCMC = true;
 const handleChangedRarity = () => changedRarity = true;
 const handleChangedType = () => changedType = true;
 
-const colors = [{id: 'red', name: 'Vermelho'}, { id: 'blue', name: 'Azul'}, { id: 'black', name: 'Preto'}, { id: 'white', name: 'Branco'}, { id: 'green', name: 'Verde'}, { id: 'colorless', name: 'Incolor'}];
+const colors = [{id: 'red', name: 'Vermelho'}, { id: 'blue', name: 'Azul'}, { id: 'black', name: 'Preto'}, { id: 'white', name: 'Branco'}, { id: 'green', name: 'Verde'}, { id: 'colorless', name: 'Incolor'}, { id: 'land', name: 'Land'}];
 
 const getFiltersTemplate = (color) =>`
   <input class="btn-check" onchange="handleChangedColors()" type="checkbox" id="${color.id}" autocomplete="off" />
@@ -84,13 +85,7 @@ const getFiltersTemplate = (color) =>`
   <label class="btn filter-chip" for="rare-${rarity.id}">${rarity.name}</label>
   `
 
-  // Tipo é montado dinamicamente a partir dos tipos presentes na base.
-  let types = [];
-
-  const getFiltersTypesTemplate = (type) =>`
-  <input class="btn-check" onchange="handleChangedType()" type="checkbox" id="type-${type.id}" autocomplete="off" />
-  <label class="btn filter-chip" for="type-${type.id}">${type.name}</label>
-  `
+  // Tipo virou combobox (ver createTypeFilter) — não usa mais chips.
 
   // ===== Filtros das colunas novas (base NOVA) =====
   // Idioma é montado dinamicamente a partir dos idiomas que existem na base
@@ -165,18 +160,33 @@ const getFiltersTemplate = (color) =>`
   <label class="btn filter-chip" for="${prefix}${item.id}">${item.name}</label>
   `;
 
+  // São ~15 idiomas na base, mas o cliente só quer 5 chips fixos. Todo o resto
+  // (e as cartas ainda sem idioma preenchido) cai em "Outros".
+  const IDIOMAS_FIXOS = [
+    { id: 'PT', name: 'Português' },
+    { id: 'EN', name: 'Inglês' },
+    { id: 'JP', name: 'Japonês' },
+    { id: 'PH', name: 'Phyrexiano' },
+    { id: 'OUTROS', name: 'Outros' },
+  ];
+
+  // Reduz o código da carta a um dos 5 grupos acima.
+  const idiomaCanon = (raw) => {
+    const code = (raw || '').toUpperCase().trim();
+    if (code === 'PT' || code === 'BR') return 'PT';
+    if (code === 'EN') return 'EN';
+    if (code === 'JP' || code === 'JA') return 'JP';
+    if (code.startsWith('PH')) return 'PH';
+    return 'OUTROS';
+  };
+
   const createIdiomaFilter = () => {
     const el = document.getElementById('idioma-filters');
     if (!el) return;
-    const cards = loadCards();
-    const codes = [
-      ...new Set(
-        cards.map((c) => (c.idioma || '').toUpperCase().trim()).filter(Boolean)
-      ),
-    ].sort();
-    idiomas = codes.map((code) => ({
-      id: code,
-      name: (IDIOMA_FLAGS[code] ? IDIOMA_FLAGS[code] + ' ' : '') + (IDIOMA_NAMES[code] || code),
+    idiomas = IDIOMAS_FIXOS.map((i) => ({
+      id: i.id,
+      // flagFor() usa SVG inline (o emoji de bandeira não renderiza no Windows).
+      name: (typeof flagFor === 'function' ? flagFor(i.id) : '') + i.name,
     }));
     el.innerHTML = '';
     idiomas.forEach((i) => (el.innerHTML += getGenericCheckboxTemplate(i, 'idioma-')));
@@ -204,29 +214,34 @@ const getFiltersTemplate = (color) =>`
     formatos.forEach((f) => (el.innerHTML += getGenericCheckboxTemplate(f, 'fmt-')));
   };
 
+  // As 4 opções fixas a pedido do cliente (antes eram montadas a partir da base).
+  // "Cartas Pimpadas" = coluna "D" da planilha (título "P"), que a API publica
+  // no campo "pimpada": qualquer carta com um extra (foil, textless, extended
+  // art...). Os quatro chips são sempre exibidos — se dependessem de haver dado
+  // carregado, o filtro sumiria da tela enquanto o cache estivesse velho.
+  const ACABAMENTOS_FIXOS = [
+    { id: 'foil', name: 'Foil' },
+    { id: 'promo', name: 'Promo' },
+    { id: 'borderless', name: 'Borderless' },
+    { id: 'pimpadas', name: 'Cartas Pimpadas' },
+  ];
+
+  const isPimpada = (card) =>
+    String(card?.pimpada ?? '').trim().toUpperCase() === 'P';
+
   const createFoilFilter = () => {
     const el = document.getElementById('foil-filters');
     if (!el) return;
-    const cards = loadCards();
-    const seen = new Map(); // normalizado -> nome de exibição
-    cards.forEach((c) => {
-      // usa tokens: "Promo-Foil" vira "Promo" e "Foil" separados (sem chip combinado).
-      getAcabTokens(c).forEach((v) => {
-        const key = normalizeSearch(v);
-        if (!seen.has(key)) seen.set(key, titleCaseAcab(v));
-      });
-    });
-    foils = [...seen.entries()]
-      .map(([id, name]) => ({ id, name }))
-      .sort((a, b) => a.name.localeCompare(b.name));
+    foils = ACABAMENTOS_FIXOS;
     el.innerHTML = '';
     foils.forEach((f) => (el.innerHTML += getGenericCheckboxTemplate(f, 'foil-')));
   };
 
-  // Coleção, Subtipo e Artista têm muitos valores -> viram combobox com busca.
+  // Tipo, Subtipo, Coleção e Artista têm muitos valores -> viram combobox com busca.
   let tomColecao = null;
   let tomSubtipo = null;
   let tomArtista = null;
+  let tomTipo = null;
 
   // Combobox multi-seleção com busca (Tom Select). Cai de pé se a lib não carregar.
   const initTomSelect = (selectId, placeholder) => {
@@ -327,18 +342,17 @@ const createRaritiesFilter = () => {
   });
 }
 
+// Tipo virou combobox com busca (antes eram chips): são muitos valores e o
+// painel precisa caber numa tela só.
 const createTypeFilter = () => {
-  const typeFilters = document.getElementById('type-filters');
-  if (!typeFilters) return;
+  resetSelect('tipo-select');
   const cards = loadCards();
-  const tokens = [
-    ...new Set(
-      cards.flatMap((c) => (c.Tipo || '').split('-').map((t) => t.trim())).filter(Boolean)
-    ),
-  ].sort((a, b) => a.localeCompare(b));
-  types = tokens.map((t) => ({ id: normalizeSearch(t), name: t }));
-  typeFilters.innerHTML = '';
-  types.forEach((type) => (typeFilters.innerHTML += getFiltersTypesTemplate(type)));
+  // Tipo pode ser composto ("Lendário-Artefato") -> lista os tipos individuais.
+  const distinct = [
+    ...new Set(cards.flatMap((c) => (c.Tipo || '').split('-').map((t) => t.trim()))),
+  ];
+  populateSelect('tipo-select', distinct);
+  tomTipo = initTomSelect('tipo-select', 'Todos os tipos…');
 }
 
 const resetItem = (array, key) => {
@@ -353,13 +367,13 @@ const resetFilter = () => {
   const mc = document.getElementById('multicolor');
   if (mc) mc.checked = false;
   resetItem(cmcs, 'cmc-');
-  resetItem(types, 'type-');
   resetItem(rarities, 'rare-');
   resetItem(idiomas, 'idioma-');
   resetItem(condicoes, 'cond-');
   resetItem(formatos, 'fmt-');
   resetItem(foils, 'foil-');
 
+  if (tomTipo) tomTipo.clear();
   if (tomColecao) tomColecao.clear();
   if (tomSubtipo) tomSubtipo.clear();
   if (tomArtista) tomArtista.clear();
@@ -400,9 +414,6 @@ const setFilters = async (setInHtml = false) => {
   if(checkIfHasSelected(rarities, 'rare-')) {
     cards = rarityFilterRow(cards);
   }
-  if(checkIfHasSelected(types, 'type-')) {
-    cards = typesFilterRow(cards);
-  }
   if(checkIfHasSelected(idiomas, 'idioma-')) {
     cards = idiomaFilterRow(cards);
   }
@@ -415,6 +426,7 @@ const setFilters = async (setInHtml = false) => {
   if(checkIfHasSelected(foils, 'foil-')) {
     cards = foilFilterRow(cards);
   }
+  cards = typesFilterRow(cards);
   cards = colecaoFilterRow(cards);
   cards = subtipoFilterRow(cards);
   cards = artistaFilterRow(cards);
@@ -459,6 +471,19 @@ const cardsFilterRow = (cards) => {
     green: document.getElementById('green')?.checked,
     colorless: document.getElementById('colorless')?.checked,
   };
+
+  // "Land" não é uma cor: a planilha marca L na coluna de cor JUNTO com as
+  // cores do terreno (ex.: "B-L", "W-U-B-R-G-L"). Então filtramos os terrenos
+  // primeiro e, daí em diante, comparamos as cores ignorando o L — assim
+  // "Land" sozinho traz todos os terrenos, e "Land + Preto" traz os pretos.
+  if (document.getElementById('land')?.checked) {
+    cards = cards
+      .filter((card) => (card.category || []).includes('L'))
+      .map((card) => ({
+        ...card,
+        category: (card.category || []).filter((c) => c !== 'L'),
+      }));
+  }
 
   const colorsReference = getColorsReference(selected);
   const multi = document.getElementById('multicolor')?.checked;
@@ -560,27 +585,33 @@ const rarityFilterRow = (cards) => {
 
 // Tipo vem por extenso e pode ser composto ("Lendário-Artefato"). Match por token.
 const typesFilterRow = (cards) => {
-  const selected = types
-    .filter((t) => document.getElementById('type-' + t.id)?.checked)
-    .map((t) => normalizeSearch(t.name));
-  if (selected.length <= 0) return cards;
+  const values = getSelectValues('tipo-select');
+  if (values.length <= 0) return cards;
   return cards.filter((card) => {
-    const tokens = (card.Tipo || '').split('-').map((t) => normalizeSearch(t));
-    return selected.some((s) => tokens.includes(s));
+    const parts = (card.Tipo || '').split('-').map((t) => t.trim());
+    return values.some((v) => parts.includes(v));
   });
 }
 
-// Foil / Promo (coluna Foil-Promo).
+// Foil / Promo / Borderless (coluna Foil-Promo) + Cartas Pimpadas (coluna "D").
 const foilFilterRow = (cards) => {
   const selected = foils
     .filter((f) => document.getElementById('foil-' + f.id)?.checked)
     .map((f) => f.id); // ids são o acabamento normalizado
   if (selected.length <= 0) return cards;
+
+  const querPimpadas = selected.includes('pimpadas');
+  const acabamentos = selected.filter((s) => s !== 'pimpadas');
+
   // Card casa se QUALQUER um dos seus tokens estiver selecionado.
   // Ex.: "Promo-Foil" -> ["promo","foil"] casa com "Promo" OU "Foil".
-  return cards.filter((card) =>
-    getAcabTokens(card).some((t) => selected.includes(normalizeSearch(t)))
-  );
+  return cards.filter((card) => {
+    if (querPimpadas && isPimpada(card)) return true;
+    return (
+      acabamentos.length > 0 &&
+      getAcabTokens(card).some((t) => acabamentos.includes(normalizeSearch(t)))
+    );
+  });
 }
 
 const artistaFilterRow = (cards) => {
@@ -598,7 +629,7 @@ const getCheckedIds = (array, prefix) =>
 const idiomaFilterRow = (cards) => {
   const selected = getCheckedIds(idiomas, 'idioma-');
   if (selected.length <= 0) return cards;
-  return cards.filter((card) => selected.includes((card.idioma || '').toUpperCase()));
+  return cards.filter((card) => selected.includes(idiomaCanon(card.idioma)));
 };
 
 const condicaoFilterRow = (cards) => {
@@ -747,7 +778,8 @@ const deselectValue = (id, val) => {
   const ts =
     id === 'colecao-select' ? tomColecao :
     id === 'subtipo-select' ? tomSubtipo :
-    id === 'artista-select' ? tomArtista : null;
+    id === 'artista-select' ? tomArtista :
+    id === 'tipo-select' ? tomTipo : null;
   if (ts) {
     ts.removeItem(val);
     return;
@@ -761,13 +793,23 @@ const selectValues = (id, vals) => {
   const ts =
     id === 'colecao-select' ? tomColecao :
     id === 'subtipo-select' ? tomSubtipo :
-    id === 'artista-select' ? tomArtista : null;
+    id === 'artista-select' ? tomArtista :
+    id === 'tipo-select' ? tomTipo : null;
   if (ts) {
     ts.setValue(vals, true); // silent: não dispara re-render aqui
     return;
   }
   const el = document.getElementById(id);
   if (el) [...el.options].forEach((o) => { if (vals.includes(o.value)) o.selected = true; });
+};
+
+// Pinta os dois botões da toolbar. Eles são sempre opostos: quando um está
+// dourado, o outro está apagado (pedido do cliente, pág. 1 do documento).
+const setToolbarButtons = (active) => {
+  const toggle = document.querySelector('.filter-toggle');
+  const apply = document.querySelector('.filter-apply-top');
+  if (toggle) toggle.classList.toggle('is-active', active);
+  if (apply) apply.classList.toggle('is-active', active);
 };
 
 const renderActiveFilters = () => {
@@ -786,11 +828,13 @@ const renderActiveFilters = () => {
   if (mc && mc.checked) tags.push({ label: 'Multicoloridas', clear: () => (mc.checked = false) });
   pushChecked(cmcs, 'cmc-', (c) => 'Custo ' + c.name);
   pushChecked(rarities, 'rare-', (r) => r.name);
-  pushChecked(types, 'type-', (t) => t.name);
   pushChecked(idiomas, 'idioma-', (i) => i.name);
   pushChecked(condicoes, 'cond-', (c) => c.name);
   pushChecked(formatos, 'fmt-', (f) => f.name);
   pushChecked(foils, 'foil-', (f) => f.name);
+  getSelectValues('tipo-select').forEach((v) =>
+    tags.push({ label: v, clear: () => deselectValue('tipo-select', v) })
+  );
   getSelectValues('colecao-select').forEach((v) =>
     tags.push({ label: v, clear: () => deselectValue('colecao-select', v) })
   );
@@ -801,13 +845,10 @@ const renderActiveFilters = () => {
     tags.push({ label: v, clear: () => deselectValue('artista-select', v) })
   );
 
-  // Filtro aplicado: troca as cores entre "Filtros" (fica dourado) e "Filtrar"
-  // (fica neutro) na toolbar, pra sinalizar que há filtro ativo.
+  // Filtro aplicado: "Filtros" fica dourado e "Filtrar" apaga. Sem filtro, o
+  // oposto. Os dois nunca ficam dourados ao mesmo tempo.
   const searchVal = (document.getElementById('search')?.value || '').trim();
-  const hasActive = tags.length > 0 || searchVal.length > 0;
-  document.querySelectorAll('.filter-toggle, .filter-apply-top').forEach((b) => {
-    if (b) b.classList.toggle('is-active', hasActive);
-  });
+  setToolbarButtons(tags.length > 0 || searchVal.length > 0);
 
   box.innerHTML = '';
   if (tags.length <= 0) {
@@ -833,22 +874,16 @@ const hasAnySelection = () => {
   const anyChecked = [...document.querySelectorAll('#filters input.btn-check')].some(
     (c) => c.checked
   );
-  const anySelect = ['colecao-select', 'subtipo-select', 'artista-select'].some(
+  const anySelect = ['tipo-select', 'colecao-select', 'subtipo-select', 'artista-select'].some(
     (id) => getSelectValues(id).length > 0
   );
   const searchVal = (document.getElementById('search')?.value || '').trim().length > 0;
   return anyChecked || anySelect || searchVal;
 };
 
-// Atualiza a cor dos botões da toolbar AO VIVO conforme o usuário marca/desmarca
-// chips — mesmo sem aplicar. Assim, ao limpar os chips, "Filtrar" volta ao dourado
-// e "Filtros" ao neutro (sinaliza que dá pra filtrar de novo).
-const refreshFilterButtons = () => {
-  const active = hasAnySelection();
-  document.querySelectorAll('.filter-toggle, .filter-apply-top').forEach((b) => {
-    if (b) b.classList.toggle('is-active', active);
-  });
-};
+// Recalcula a cor dos botões a partir do que está selecionado. Usado ao
+// restaurar o estado (volta da tela de carta), onde os filtros já valem.
+const refreshFilterButtons = () => setToolbarButtons(hasAnySelection());
 
 // ---- Preservar filtros + scroll ao abrir/voltar da tela de carta ----
 const saveListState = () => {
@@ -858,6 +893,7 @@ const saveListState = () => {
     );
     const state = {
       checked,
+      tipo: getSelectValues('tipo-select'),
       colecao: getSelectValues('colecao-select'),
       subtipo: getSelectValues('subtipo-select'),
       artista: getSelectValues('artista-select'),
@@ -896,6 +932,7 @@ const restoreListState = async () => {
     const el = document.getElementById(id);
     if (el) el.checked = true;
   });
+  selectValues('tipo-select', st.tipo || []);
   selectValues('colecao-select', st.colecao || []);
   selectValues('subtipo-select', st.subtipo || []);
   selectValues('artista-select', st.artista || []);
@@ -958,10 +995,9 @@ const wireLiveFiltering = () => {
     });
   }
 
-  // Marcar/desmarcar qualquer chip ou combobox atualiza a cor dos botões ao vivo
-  // (mesmo sem aplicar) — task: ao limpar filtros, botões voltam ao estado original.
-  const panel = document.getElementById('filters');
-  if (panel) panel.addEventListener('change', refreshFilterButtons);
+  // A cor dos botões segue o filtro APLICADO, não a seleção pendente: enquanto
+  // o usuário marca os chips, "Filtrar" continua dourado — é nele que precisa
+  // clicar. A troca acontece depois, em renderActiveFilters().
 };
 
 // Monta os filtros a partir dos cards e renderiza. Fica global para que

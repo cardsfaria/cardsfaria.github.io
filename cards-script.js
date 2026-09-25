@@ -12,8 +12,13 @@ const CARDS_SCHEMA_VERSION = "2026-07-08";
 
 const ensureCardsSchema = () => {
   try {
+    // O catálogo NÃO é mais guardado no localStorage: ~7,7MB em UTF-16, contra
+    // a cota de ~5MB do Safari iOS. Removemos o resquício das versões antigas
+    // — inclusive o "[]" que travava o aparelho em "nenhuma carta encontrada"
+    // — e assim liberamos a cota de volta.
+    localStorage.removeItem("cards");
+
     if (localStorage.getItem("cardsSchema") !== CARDS_SCHEMA_VERSION) {
-      localStorage.removeItem("cards");
       localStorage.removeItem("lastModified");
       localStorage.removeItem("colors");
       localStorage.setItem("cardsSchema", CARDS_SCHEMA_VERSION);
@@ -23,20 +28,12 @@ const ensureCardsSchema = () => {
   }
 };
 
-// Fallback em memória. O catálogo (~2,7MB) pode estourar a cota do localStorage
-// no Safari iOS (limite ~5MB contado em UTF-16) ou ser recusado no modo privado.
-// Nesse caso os cards vivem só em memória e a página renderiza sem o reload.
+// Os cards vivem em memória (leitura síncrona, fonte única da verdade) e são
+// persistidos no IndexedDB, que aguenta o catálogo inteiro em qualquer
+// plataforma. O localStorage guarda só o carimbo de tempo, que é minúsculo.
 window.__cardsMem = window.__cardsMem || null;
 
-const loadCards = () => {
-  try {
-    const raw = localStorage.getItem("cards");
-    if (raw) return JSON.parse(raw);
-  } catch (e) {
-    // parse/leitura falhou — cai no fallback em memória.
-  }
-  return window.__cardsMem || [];
-};
+const loadCards = () => window.__cardsMem || [];
 window.loadCards = loadCards;
 
 // ---- IndexedDB: cache grande que PERSISTE no iOS (onde o localStorage, ~5MB,
@@ -80,6 +77,9 @@ const idbSet = async (key, val) => {
       tx.objectStore(IDB_STORE).put(val, key);
       tx.oncomplete = () => resolve(true);
       tx.onerror = () => reject(tx.error);
+      // Estouro de cota aborta a transação sem disparar onerror. Sem isto a
+      // promessa ficava pendurada para sempre.
+      tx.onabort = () => reject(tx.error || new Error("abort"));
     });
   } catch (e) {
     return false;
@@ -87,26 +87,71 @@ const idbSet = async (key, val) => {
 };
 window.idbGet = idbGet;
 
-// Persiste os cards em: memória (leitura síncrona) + IndexedDB (persistente,
-// iOS) + localStorage (rápido no desktop). O carimbo de tempo vai junto.
-const saveCards = (cards) => {
+// Persiste os cards em: memória (leitura síncrona) + IndexedDB (persistente em
+// qualquer plataforma). O carimbo de tempo vai junto — e também no
+// localStorage, por ser pequeno o bastante para sempre caber.
+const saveCards = async (cards) => {
+  // NUNCA sobrescreve o cache com uma lista vazia. Gravar [] apagava o catálogo
+  // bom e, como a regravação com os dados certos falhava por cota no iOS, o
+  // aparelho ficava travado em "nenhuma carta encontrada" para sempre.
+  if (!Array.isArray(cards) || cards.length === 0) return false;
+
   window.__cardsMem = cards;
   const stamp = new Date().toISOString();
   window.__cardsMemTime = stamp;
 
-  // IndexedDB — assíncrono, não bloqueia o render (fire and forget).
-  idbSet("cards", cards);
-  idbSet("meta", { lastModified: stamp, schema: CARDS_SCHEMA_VERSION });
+  // ORDEM IMPORTA: grava as cartas primeiro e só carimba a hora se elas
+  // realmente persistiram. Quando as duas gravações eram disparadas juntas, a
+  // pequena (o carimbo) passava e a grande (3,9MB de cartas) podia falhar —
+  // o aparelho ficava com catálogo velho e carimbo novo, se achava atualizado
+  // e nunca mais buscava o estoque novo.
+  const gravou = await idbSet("cards", cards);
+  if (!gravou) return false;
+
+  await idbSet("meta", { lastModified: stamp, schema: CARDS_SCHEMA_VERSION });
 
   try {
-    localStorage.setItem("cards", JSON.stringify(cards));
     localStorage.setItem("lastModified", stamp);
-    return true;
   } catch (e) {
-    return false; // localStorage cheio (iOS) — segue via memória + IndexedDB.
+    // localStorage indisponível — o carimbo do IndexedDB já basta.
   }
+  return true;
 };
 window.saveCards = saveCards;
+
+// ---- Identidade da carta no carrinho ----
+// O campo "id" é apenas a POSIÇÃO da carta na planilha (ver separeteCards): ao
+// cadastrar ou remover qualquer carta, os ids de todas as seguintes mudam. O
+// "searchCode" é o código único e estável, então é ele que identifica a carta.
+// (Há uma cópia destas duas funções em cart/cart-script.js, porque a página do
+// carrinho não carrega este arquivo.)
+const cardKey = (card) =>
+  String((card && card.searchCode) || "#" + (card && card.id));
+window.cardKey = cardKey;
+
+// Junta linhas repetidas da mesma carta num item só, somando as quantidades e
+// respeitando o estoque disponível.
+const mergeCart = (cart) => {
+  const porChave = new Map();
+  (cart || []).forEach((item) => {
+    const key = cardKey(item);
+    const estoque = parseInt(item.qty) || 1;
+    const atual = porChave.get(key);
+    if (atual) {
+      atual.quantitySelected = Math.min(
+        estoque,
+        (atual.quantitySelected || 1) + (item.quantitySelected || 1)
+      );
+    } else {
+      porChave.set(key, {
+        ...item,
+        quantitySelected: Math.min(estoque, item.quantitySelected || 1)
+      });
+    }
+  });
+  return [...porChave.values()];
+};
+window.mergeCart = mergeCart;
 
 document.getElementById("menu-button")?.click();
 
@@ -166,7 +211,11 @@ const addToCart = (cardId) => {
   const sel = document.getElementById("qtysel-" + cardId);
   const wanted = sel ? parseInt(sel.textContent) || 1 : 1;
 
-  const cardInCart = cart.find((c) => c.id == cardId);
+  // Procura pelo CÓDIGO da carta, não pelo id: o id é só a posição na planilha
+  // e muda toda vez que uma carta é cadastrada ou removida. Era por isso que a
+  // mesma carta entrava duas vezes no pedido, furando o estoque.
+  const key = cardKey(card);
+  const cardInCart = cart.find((c) => cardKey(c) === key);
   const already = cardInCart ? cardInCart.quantitySelected : 0;
   const canAdd = Math.max(0, available - already);
 
@@ -226,7 +275,12 @@ const API_BASE = IS_PROD
   : `${window.location.protocol}//${window.location.hostname}:8000`;
 
 const getCards = () => {
-  return fetch(`${API_BASE}/api/fetchCards`);
+  // A API não manda ETag nem Last-Modified, então o navegador não tem como
+  // revalidar e pode devolver uma cópia guardada — o site mostraria o estoque
+  // de dias atrás. URL sempre diferente + no-store garantem resposta nova.
+  return fetch(`${API_BASE}/api/fetchCards?t=${Date.now()}`, {
+    cache: "no-store"
+  });
 };
 
 const gotoPage = (page) => {
@@ -284,13 +338,25 @@ const getCondBadge = (condicao) => {
   return `<span class="badge-cond badge-cond--${cls}" title="Condição: ${cond}">${cond}</span>`;
 };
 
-// Acabamento (Foil, Promo-Foil, Borderless...) — chip mostrado na linha de compra.
+// Acabamento: só Foil e Promo ganham selo. Os demais (Borderless, arte
+// estendida, textless...) a pessoa reconhece pela arte da própria carta.
+// "Promo-Foil" rende os dois selos, porque é as duas coisas.
+const ACAB_DESTAQUE = { foil: "Foil", promo: "Promo" };
+
 const getAcabBadge = (card) => {
   const raw = (card.acabamento || card["FOIL?"] || "").trim();
   if (!raw) return "";
-  // Title case preservando espaços e hífens: "promo-foil" -> "Promo-Foil".
-  const label = raw.toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
-  return `<span class="badge-acab" title="Acabamento: ${label}">${label}</span>`;
+  const tokens = [];
+  raw.split("-").forEach((t) => {
+    const k = t.trim().toLowerCase();
+    if (ACAB_DESTAQUE[k] && !tokens.includes(k)) tokens.push(k);
+  });
+  return tokens
+    .map(
+      (k) =>
+        `<span class="badge-acab" title="Acabamento: ${ACAB_DESTAQUE[k]}">${ACAB_DESTAQUE[k]}</span>`
+    )
+    .join("");
 };
 
 const getCardTemplate = (card) => {
@@ -302,7 +368,13 @@ const getCardTemplate = (card) => {
           <span class="qty-val" id="qtysel-${card.id}">1</span>
           <button type="button" class="qty-btn" onclick="changeQty('${card.id}', 1)" aria-label="Aumentar">+</button>
         </div>`
-      : `<span class="qty-single">Última unidade</span>`;
+      : "";
+  // Com 1 unidade só mostra "Última unidade" (antes repetia "1 disponível" ao lado).
+  const stockLabel = avail > 1 ? `${avail} disponíveis` : "Última unidade";
+
+  // Selos numa linha só, abaixo da imagem: acabamento + idioma + condição.
+  const badges =
+    getAcabBadge(card) + getLangBadge(card.idioma) + getCondBadge(card.condicao);
 
   return `
 <div class="col-6 col-lg-4">
@@ -310,7 +382,6 @@ const getCardTemplate = (card) => {
     <div class="card-info card-title">
       <span>${card.name}</span>
     </div>
-    <div class="card-acab-row">${getAcabBadge(card)}</div>
     <div class="card-colecao">${card.colecao || ""}</div>
 
     <div class="card-image-wrapper shadow">
@@ -329,21 +400,11 @@ const getCardTemplate = (card) => {
       </div>
     </div>
 
+    ${badges ? `<div class="card-meta">${badges}</div>` : ""}
+
     <div class="card-info card-price">
       <span>${formatter.format(card.price || 0)}</span>
     </div>
-
-    ${
-      getLangBadge(card.idioma) || getCondBadge(card.condicao)
-        ? `<div class="card-meta">${getLangBadge(card.idioma)}${getCondBadge(
-            card.condicao
-          )}</div>`
-        : ""
-    }
-
-    <div class="card-stock">${avail} ${
-    avail === 1 ? "disponível" : "disponíveis"
-  }</div>
 
     ${
       card.additionalInfo
@@ -353,6 +414,7 @@ const getCardTemplate = (card) => {
 
     <div class="card-buy">
       ${stepper}
+      <span class="card-stock">${stockLabel}</span>
       <button
         type="button"
         class="btn btn-dark btn-floating"
@@ -400,6 +462,11 @@ const separeteCards = async (category = null) => {
       }
     }
   }
+
+  // Só cacheia se veio conteúdo de verdade. Se a API respondeu com erro
+  // (5xx/429 do rate limit) ou devolveu lista vazia, preservamos o cache
+  // anterior em vez de destruí-lo — melhor mostrar dados de ontem do que
+  // uma tela vazia.
   saveCards(cards);
 
   if (loading) {
@@ -416,7 +483,8 @@ const separeteCards = async (category = null) => {
   // Em páginas sem esses hooks (ex.: card/list), os dados já estão em
   // window.__cardsMem/IndexedDB e o script da página os lê via loadCards().
 
-  return cards;
+  // Se a busca não trouxe nada, devolve o cache preservado (não a lista vazia).
+  return cards.length > 0 ? cards : loadCards();
 };
 
 const createDomCards = (
@@ -480,18 +548,20 @@ window.onscroll = async function () {
   // Cache antigo (schema diferente) é descartado antes de qualquer leitura.
   ensureCardsSchema();
 
-  // Descobre o carimbo de tempo do cache. No desktop vem do localStorage; no
-  // iOS (localStorage cheio) hidrata a memória a partir do IndexedDB.
+  // Hidrata a memória a partir do IndexedDB (única fonte persistente do
+  // catálogo). O carimbo de tempo vem junto; o do localStorage é só um reforço.
   let lastModified = localStorage.getItem("lastModified");
 
-  if (loadCards().length === 0) {
+  {
     const [idbCards, idbMeta] = await Promise.all([
       idbGet("cards"),
       idbGet("meta"),
     ]);
     if (idbMeta && idbMeta.schema !== CARDS_SCHEMA_VERSION) {
-      // Schema mudou: descarta o cache do IndexedDB.
-      await idbSet("cards", null);
+      // Schema mudou: descarta o cache do IndexedDB (cards e carimbo, senão o
+      // carimbo velho sobreviveria e seria comparado contra um cache já morto).
+      await Promise.all([idbSet("cards", null), idbSet("meta", null)]);
+      lastModified = null;
     } else if (Array.isArray(idbCards) && idbCards.length) {
       window.__cardsMem = idbCards;
       lastModified = (idbMeta && idbMeta.lastModified) || lastModified;
@@ -505,7 +575,7 @@ window.onscroll = async function () {
     Date.now() - new Date(lastModified).getTime() < CACHE_MINUTES * 60000;
 
   if (fresh) {
-    // Cache válido (localStorage ou IndexedDB) — renderiza sem buscar da API.
+    // Cache válido (IndexedDB) — renderiza sem buscar da API.
     if (typeof window.renderCardsPage === "function") {
       window.renderCardsPage();
     }

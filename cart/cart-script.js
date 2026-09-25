@@ -1,13 +1,52 @@
 const tbody = document.getElementById("tbody-cart");
 const table = document.getElementById("table");
 
+// ---- Identidade da carta (cópia de cards-script.js, que esta página não carrega) ----
+// O "id" é só a POSIÇÃO na planilha e muda quando uma carta é cadastrada ou
+// removida. O "searchCode" é o código único e estável.
+const cardKey = (card) =>
+  String((card && card.searchCode) || "#" + (card && card.id));
+
+// Junta linhas repetidas da mesma carta, somando as quantidades sem passar do
+// estoque. Conserta também os pedidos que já ficaram duplicados no aparelho.
+const mergeCart = (cart) => {
+  const porChave = new Map();
+  (cart || []).forEach((item) => {
+    const key = cardKey(item);
+    const estoque = parseInt(item.qty) || 1;
+    const atual = porChave.get(key);
+    if (atual) {
+      atual.quantitySelected = Math.min(
+        estoque,
+        (atual.quantitySelected || 1) + (item.quantitySelected || 1)
+      );
+    } else {
+      porChave.set(key, {
+        ...item,
+        quantitySelected: Math.min(estoque, item.quantitySelected || 1)
+      });
+    }
+  });
+  return [...porChave.values()];
+};
+
+// Lê o carrinho já normalizado. Se havia duplicata, regrava consertado.
+const getCart = () => {
+  const bruto = JSON.parse(localStorage.getItem("cart")) || [];
+  const limpo = mergeCart(bruto);
+  if (limpo.length !== bruto.length) {
+    localStorage.setItem("cart", JSON.stringify(limpo));
+  }
+  return limpo;
+};
+
 // if it is http redirect to https
 if (location.protocol !== "https:") {
   window.location.href = window.location.href.replace("http://", "https://");
 }
 
 const getCopyText = () => {
-  const cart = JSON.parse(localStorage.getItem("cart")) || [];
+  const cart = getCart();
   let text = "Olá, tudo bem? Eu gostaria de reservar essas cartas: \n\n";
   let quantityOfCards = 0;
   cart.forEach((item) => {
@@ -36,7 +75,7 @@ const copyList = () => {
   navigator.clipboard.writeText(text);
 
   Toastify({
-    text: "Lista copiada com sucesso!",
+    text: "Pedido copiado com sucesso!",
     duration: 1000,
     close: true,
     gravity: "right", // `top` or `bottom`
@@ -56,7 +95,7 @@ const formatter = new Intl.NumberFormat("pt-BR", {
 });
 
 const renderCart = (cartParam = []) => {
-  const cart = JSON.parse(localStorage.getItem("cart")) || [];
+  const cart = getCart();
   let cartArray = cartParam;
 
   if (cartParam.length <= 0) {
@@ -85,20 +124,28 @@ const renderCart = (cartParam = []) => {
       <td>${item.quantitySelected}</td>
       <td>${item.additionalInfo || "-"}</td>
       <td>
-        <i style="cursor: pointer;" data-toggle="tooltip-btn-trash" onclick="removeItemFromCart('${
-          item.id
-        }')" class="fa-solid fa-trash text-danger"></i>
+        <i style="cursor: pointer;" data-toggle="tooltip-btn-trash" data-acao="remover" class="fa-solid fa-trash text-danger"></i>
 
-        <i style="cursor: pointer;" onclick="addOneItemCart('${
-          item.id
-        }')" class="fa-solid fa-add text-success"></i>
+        <i style="cursor: pointer;" data-acao="somar" class="fa-solid fa-add text-success"></i>
 
-        <i style="cursor: pointer;" onclick="removeOneItemFromCart('${
-          item.id
-        }')" class="fa-solid fa-minus text-warning"></i>
+        <i style="cursor: pointer;" data-acao="subtrair" class="fa-solid fa-minus text-warning"></i>
 
       </td>
     `;
+
+    // Os códigos das cartas têm apóstrofo, espaço e até quebra de linha, então
+    // nada de interpolar no onclick — os handlers são ligados aqui.
+    const chave = cardKey(item);
+    tr.querySelector('[data-acao="remover"]').addEventListener("click", () =>
+      removeItemFromCart(chave)
+    );
+    tr.querySelector('[data-acao="somar"]').addEventListener("click", () =>
+      addOneItemCart(chave)
+    );
+    tr.querySelector('[data-acao="subtrair"]').addEventListener("click", () =>
+      removeOneItemFromCart(chave)
+    );
+
     tbody.appendChild(tr);
   });
 
@@ -149,10 +196,11 @@ const emptyCart = (showMessage = true) => {
   }
 };
 
-const removeItemFromCart = (itemId) => {
-  const cart = JSON.parse(localStorage.getItem("cart")) || [];
-  const item = cart.find((item) => item.id == itemId);
-  const newCart = cart.filter((item) => item.id != itemId);
+const removeItemFromCart = (chave) => {
+  const cart = getCart();
+  const item = cart.find((item) => cardKey(item) === chave);
+  if (!item) return;
+  const newCart = cart.filter((item) => cardKey(item) !== chave);
   Toastify({
     text: `Removido ${item.name} com sucesso!`,
     duration: 1000,
@@ -174,9 +222,10 @@ const removeItemFromCart = (itemId) => {
   renderCart(newCart);
 };
 
-const addOneItemCart = (itemId) => {
-  const cart = JSON.parse(localStorage.getItem("cart")) || [];
-  const item = cart.find((item) => item.id == itemId);
+const addOneItemCart = (chave) => {
+  const cart = getCart();
+  const item = cart.find((item) => cardKey(item) === chave);
+  if (!item) return;
   if (item.quantitySelected >= parseInt(item.qty)) {
     Toastify({
       text: "Quantidade máxima atingida",
@@ -204,7 +253,7 @@ const addOneItemCart = (itemId) => {
     }
   }).showToast();
 
-  const cardIndex = cart.findIndex((c) => c.id == item.id);
+  const cardIndex = cart.findIndex((c) => cardKey(c) === chave);
   cart[cardIndex].quantitySelected += 1;
 
   localStorage.setItem("cart", JSON.stringify(cart));
@@ -212,12 +261,13 @@ const addOneItemCart = (itemId) => {
   renderCart(cart);
 };
 
-const removeOneItemFromCart = (itemId) => {
-  const cart = JSON.parse(localStorage.getItem("cart")) || [];
-  const item = cart.find((item) => item.id == itemId);
+const removeOneItemFromCart = (chave) => {
+  const cart = getCart();
+  const item = cart.find((item) => cardKey(item) === chave);
+  if (!item) return;
 
   if (item.quantitySelected <= 1) {
-    removeItemFromCart(itemId);
+    removeItemFromCart(chave);
     return;
   }
 
@@ -232,7 +282,7 @@ const removeOneItemFromCart = (itemId) => {
       background: "linear-gradient(to right, #00b09b, #96c93d)"
     }
   }).showToast();
-  const cardIndex = cart.findIndex((c) => c.id == item.id);
+  const cardIndex = cart.findIndex((c) => cardKey(c) === chave);
   cart[cardIndex].quantitySelected -= 1;
 
   localStorage.setItem("cart", JSON.stringify(cart));
@@ -247,13 +297,13 @@ const getCartTotal = (cart) => {
 };
 
 const clearList = () => {
-  if (confirm("Deseja limpar a lista?")) {
+  if (confirm("Deseja limpar o Pedido?")) {
     emptyCart();
   }
 };
 
 const renderTotalText = () => {
-  const cart = JSON.parse(localStorage.getItem("cart")) || [];
+  const cart = getCart();
   const total = getCartTotal(cart);
   document.getElementById("total-text").innerHTML =
     "Total: " + formatter.format(total);

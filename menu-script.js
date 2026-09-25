@@ -1,8 +1,11 @@
 const currentPath = window.location.href.split("/")[3];
 
-const menuTemplate = ({ id, name, path }) => `
+// "destaque" pinta o item de dourado: é o menu mais usado do site.
+const menuTemplate = ({ id, name, path, destaque }) => `
 <li class="nav-item" style="margin-right: 30px">
-  <a id="${id}" class="nav-link font-lg" href="${path}" style="font-size: 20px" aria-current="page">${name}</a>
+  <a id="${id}" class="nav-link font-lg${
+  destaque ? " nav-destaque" : ""
+}" href="${path}" style="font-size: 20px" aria-current="page">${name}</a>
 </li>
 `;
 
@@ -10,7 +13,8 @@ const menuObject = [
   {
     id: "-nav",
     name: "Filtros",
-    path: "/"
+    path: "/",
+    destaque: true
   },
   {
     id: "recentes-nav",

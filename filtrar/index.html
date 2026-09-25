@@ -10,7 +10,7 @@
       integrity="sha384-Zenh87qX5JnK2Jl0vWa8Ck2rdkQ2Bzep5IDxbcnCeuOxjzrPF/et3URy9Bv1WTRi"
       crossorigin="anonymous"
     />
-    <link rel="stylesheet" href="../test.css?v=20260708u" />
+    <link rel="stylesheet" href="../test.css?v=20260817d" />
     <link rel="icon" type="image/x-icon" href="../ico.png" />
     <link
       rel="stylesheet"
@@ -64,8 +64,8 @@
         </div>
         <select class="filter-order" id="order-select">
           <option value="" selected>Ordenar</option>
-          <option value="C-asc">Custo ↑</option>
-          <option value="C-desc">Custo ↓</option>
+          <option value="Custo-asc">Custo ↑</option>
+          <option value="Custo-desc">Custo ↓</option>
           <option value="name-asc">Nome A–Z</option>
           <option value="name-desc">Nome Z–A</option>
           <option value="price-asc">Preço ↑</option>
@@ -110,36 +110,35 @@
           <div class="filter-chips" id="color-filters"></div>
         </div>
         <div class="filter-group">
-          <span class="filter-group__label">Raridade</span>
-          <div class="filter-chips" id="rarity-filters"></div>
-        </div>
-        <div class="filter-group">
-          <span class="filter-group__label">Custo</span>
-          <div class="filter-chips" id="cmc-filters"></div>
-        </div>
-        <div class="filter-group">
-          <span class="filter-group__label">Tipo</span>
-          <div class="filter-chips" id="type-filters"></div>
+          <span class="filter-group__label">Formato</span>
+          <div class="filter-chips" id="formato-filters"></div>
         </div>
         <div class="filter-group">
           <span class="filter-group__label">Idioma</span>
           <div class="filter-chips" id="idioma-filters"></div>
         </div>
         <div class="filter-group">
-          <span class="filter-group__label">Condição</span>
-          <div class="filter-chips" id="condicao-filters"></div>
+          <span class="filter-group__label">Raridade</span>
+          <div class="filter-chips" id="rarity-filters"></div>
         </div>
         <div class="filter-group">
-          <span class="filter-group__label">Formato</span>
-          <div class="filter-chips" id="formato-filters"></div>
+          <span class="filter-group__label">Condição e Custo de Mana</span>
+          <div class="filter-chips" id="condicao-filters"></div>
+          <div class="filter-chips" id="cmc-filters"></div>
         </div>
         <div class="filter-group">
           <span class="filter-group__label">Acabamento</span>
           <div class="filter-chips" id="foil-filters"></div>
         </div>
-        <div class="filter-group filter-group--wide">
-          <span class="filter-group__label">Subtipo</span>
-          <select multiple id="subtipo-select" placeholder="Todos os subtipos…"></select>
+        <div class="filter-group filter-group--wide filter-duo">
+          <div class="filter-subgroup">
+            <span class="filter-group__label">Tipo</span>
+            <select multiple id="tipo-select" placeholder="Todos os tipos…"></select>
+          </div>
+          <div class="filter-subgroup">
+            <span class="filter-group__label">Subtipo</span>
+            <select multiple id="subtipo-select" placeholder="Todos os subtipos…"></select>
+          </div>
         </div>
         <div class="filter-group filter-group--wide filter-duo">
           <div class="filter-subgroup">
@@ -209,8 +208,8 @@
       crossorigin="anonymous"
     ></script>
     <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
-    <script src="/menu-script.js?v=20260708u"></script>
-    <script src="/cards-script.js?v=20260708u"></script>
-    <script src="../script-test.js?v=20260708u"></script>
+    <script src="/menu-script.js?v=20260817d"></script>
+    <script src="/cards-script.js?v=20260817d"></script>
+    <script src="../script-test.js?v=20260817d"></script>
   </body>
 </html>

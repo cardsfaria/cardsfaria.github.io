@@ -126,12 +126,14 @@
 }
 
 /* Estoque disponível */
+/* "N disponíveis" agora fica na linha de compra, entre a quantidade e o carrinho. */
 .card-stock {
+  flex: 1 1 auto;
   text-align: center;
   font-size: 14px;
   font-weight: 700;
   color: #6b7280;
-  margin-top: 2px;
+  white-space: nowrap;
 }
 
 /* Idioma (bandeira) + condição — linha logo abaixo do preço */
@@ -244,42 +246,58 @@
   font-size: 16px;
   color: #111;
 }
-.qty-single {
-  font-size: 12px;
-  font-weight: 700;
-  color: #9aa0aa;
+.qty-stepper,
+.card-buy > button {
+  flex: 0 0 auto;
 }
-/* Acabamento: chip centralizado entre o nome e a edição. Altura SEMPRE reservada
-   (mesmo sem acabamento) para as imagens e os campos alinharem entre os cards. */
-.card-acab-row {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 26px; /* reserva 1 linha de chip, com ou sem acabamento */
-  margin: 0 0 2px;
+
+/* Celular: card estreito demais pra seletor + texto + carrinho numa linha só
+   (o "+" ficava escondido atrás do texto). O estoque sobe pra uma linha própria
+   e o seletor/carrinho ficam embaixo. Altura mínima fixa mantém os preços
+   alinhados entre cards com e sem seletor. */
+@media (max-width: 575.98px) {
+  .card-buy {
+    flex-wrap: wrap;
+    align-content: center;
+    gap: 4px 6px;
+    min-height: 66px;
+  }
+  .card-buy .card-stock {
+    font-size: 13px;
+  }
+  .card-buy .qty-stepper ~ .card-stock {
+    order: -1;
+    flex-basis: 100%;
+  }
+  .qty-btn {
+    width: 30px;
+    height: 30px;
+  }
+  .qty-val {
+    min-width: 22px;
+  }
 }
+/* Acabamento: agora fica na MESMA linha do idioma e da condição, abaixo da
+   imagem, e com exatamente o mesmo tamanho dos outros dois selos. */
 .badge-acab {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   text-align: center;
-  font-size: 12px;
+  font-size: 16px;
   font-weight: 700;
   line-height: 1;
-  padding: 4px 12px;
-  border-radius: 999px;
+  padding: 6px 13px;
+  border-radius: 10px;
   background: #f6e3b0;
   color: #4a3a08;
   border: 1px solid rgba(0, 0, 0, 0.1);
-  max-width: 96%;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 @media (max-width: 575.98px) {
   .badge-acab {
-    font-size: 10.5px;
-    padding: 4px 9px;
+    font-size: 13px;
+    padding: 5px 10px;
   }
 }
 
@@ -419,41 +437,44 @@ button[id^="cart-"] {
   min-width: 150px;
 }
 .filter-order:focus { border-color: var(--ff-gold); box-shadow: 0 0 0 3px var(--ff-gold-soft); }
-/* "Filtros": FECHADO = amarelo (mesmo do "Filtrar"); ABERTO = cinza/neutro. */
+/* Os dois botões da toolbar são SEMPRE opostos, e a cor indica se há filtro
+   ativo (não se o painel está aberto):
+     sem filtro  -> "Filtrar" amarelo, "Filtros" apagado
+     com filtro  -> "Filtros" amarelo, "Filtrar" apagado
+   A classe .is-active é aplicada nos dois por refreshFilterButtons(). */
 .filter-toggle {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  background: linear-gradient(180deg, var(--ff-gold-2), var(--ff-gold));
-  border: 1px solid var(--ff-gold-2);
-  color: #231a05;
-  font-weight: 700;
+  background: var(--ff-panel);
+  border: 1px solid var(--ff-border);
+  color: var(--ff-text);
+  font-weight: 600;
   border-radius: 14px;
   padding: 0.8rem 1.1rem;
   cursor: pointer;
   transition: border-color 0.2s, filter 0.15s;
 }
-.filter-toggle:hover { filter: brightness(1.05); }
-/* Painel ABERTO -> botão cinza/neutro. */
-.filter-toggle.is-open {
-  background: var(--ff-panel);
-  border-color: var(--ff-border);
-  color: var(--ff-text);
-  font-weight: 600;
-}
-.filter-toggle.is-open:hover {
-  filter: none;
+.filter-toggle:hover {
   background: var(--ff-panel-2);
   border-color: var(--ff-border-strong);
 }
+/* COM filtro ativo -> "Filtros" fica amarelo. */
+.filter-toggle.is-active {
+  background: linear-gradient(180deg, var(--ff-gold-2), var(--ff-gold));
+  border-color: var(--ff-gold-2);
+  color: #231a05;
+  font-weight: 700;
+}
+.filter-toggle.is-active:hover { filter: brightness(1.05); background: linear-gradient(180deg, var(--ff-gold-2), var(--ff-gold)); }
 
-/* "Filtrar": sempre amarelo (é a referência de amarelo). */
+/* "Filtrar": amarelo enquanto NÃO há filtro aplicado. */
 .filter-apply-top {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
   background: linear-gradient(180deg, var(--ff-gold-2), var(--ff-gold));
-  border: none;
+  border: 1px solid var(--ff-gold-2);
   color: #231a05;
   font-weight: 700;
   border-radius: 14px;
@@ -464,9 +485,39 @@ button[id^="cart-"] {
   transition: filter 0.15s;
 }
 .filter-apply-top:hover { filter: brightness(1.05); }
+/* COM filtro ativo -> "Filtrar" apaga. */
+.filter-apply-top.is-active {
+  background: var(--ff-panel);
+  border-color: var(--ff-border);
+  color: var(--ff-text);
+  font-weight: 600;
+  box-shadow: none;
+}
+.filter-apply-top.is-active:hover {
+  filter: none;
+  background: var(--ff-panel-2);
+  border-color: var(--ff-border-strong);
+}
 @media (max-width: 767px) {
-  /* no mobile a gaveta já tem o "Ver resultados" */
+  /* no mobile a gaveta já tem o "Ver resultados"; sem o par, "Filtros" fica
+     sempre amarelo (não há outro botão para ser o oposto dele). */
   .filter-apply-top { display: none; }
+  .filter-toggle {
+    background: linear-gradient(180deg, var(--ff-gold-2), var(--ff-gold));
+    border-color: var(--ff-gold-2);
+    color: #231a05;
+    font-weight: 700;
+  }
+}
+
+/* Menu do cabeçalho: "Filtros" em dourado — é o menu mais usado do site. */
+.navbar-dark .navbar-nav .nav-link.nav-destaque {
+  color: var(--ff-gold);
+  font-weight: 700;
+}
+.navbar-dark .navbar-nav .nav-link.nav-destaque:hover,
+.navbar-dark .navbar-nav .nav-link.nav-destaque:focus {
+  color: var(--ff-gold-2);
 }
 
 /* ---- Painel em grid (visível só quando .is-open) ---- */
@@ -528,6 +579,15 @@ button[id^="cart-"] {
 }
 
 /* ---- Chips (toggle) ---- */
+/* Custo: rótulos de 1 caractere. Chips mais estreitos para que "0 … 6+" caiba
+   numa linha só, deixando Condição e Custo em exatamente duas linhas. */
+#cmc-filters .filter-chip {
+  padding-left: 0.55rem;
+  padding-right: 0.55rem;
+  min-width: 2.3rem;
+  justify-content: center;
+}
+
 .filter-chip {
   /* Neutraliza as variáveis do .btn do Bootstrap (senão o hover deixa o fundo transparente). */
   --bs-btn-bg: var(--ff-panel-2);
@@ -585,6 +645,8 @@ button[id^="cart-"] {
 .mana-white { background: #efe9d2; }
 .mana-green { background: #2f9e5f; }
 .mana-colorless { background: #c2c2c2; }
+/* Terrenos: tom de terra, para não competir com as cinco cores. */
+.mana-land { background: #9a7346; }
 .mana-foil { background: conic-gradient(from 0deg, #ff66aa, #ffdd66, #66ff99, #66ccff, #cc99ff, #ff66aa); }
 /* Multicoloridas: as 5 cores de Magic (W/U/B/R/G) */
 .mana-multi { background: conic-gradient(from 0deg, #efe9d2, #2a7fc0, #4b4b52, #d3542f, #2f9e5f, #efe9d2); }
